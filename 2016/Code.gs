@@ -26,13 +26,14 @@ var APP_VERSION            = '1.0.0.0';
   1.0.0.0    ?? Oct 2016    Ivan Ng     Initial
   
   TODO:
-  Validation
-  better UI (regular hints & error hints)
-  install
+  
+  Send email on form submit
+  install?
   set all cells to plain text
+  log
 
 ----------------------------------------------------------------------
-  This program or any source codes of it may not be reproduced or 
+  This program and any source codes of it may not be reproduced or 
   distributed in any form without consent from The Animation and 
   Comics Association, HKUSU or from the author of this program.
 ===================================================================+*/
@@ -43,12 +44,13 @@ function doGet(request) {
 
 function GetParticipantInfoByPhone(strPhone)
 {
-  var arrMatchRegNums = [];
+  // Concat these 2 arrays later since we need to make check-in matches appears first!
+  var arrMatchesCheckedIn = [];
+  var arrMatchesNotCheckedIn = [];
   /*--------------------------------------------------------------------
   / Search in form responses
   --------------------------------------------------------------------*/
   var formResponses = FormApp.openById(GetGoogleFormID_()).getResponses();
-  
   for(var i = 0; i < formResponses.length; i++)
   {
     var itemResponses = formResponses[i].getItemResponses();
@@ -56,11 +58,14 @@ function GetParticipantInfoByPhone(strPhone)
     if(itemResponses[2].getResponse() == strPhone)
     {
       var jsonPartiInfo = GetParticipantInfo(i+1);
-      arrMatchRegNums.push(jsonPartiInfo);
+      if(jsonPartiInfo.CheckInStatus == '1')
+        arrMatchesCheckedIn.push(jsonPartiInfo);
+      else
+        arrMatchesNotCheckedIn.push(jsonPartiInfo);
     }
   }
   
-  return arrMatchRegNums;
+  return arrMatchesCheckedIn.concat(arrMatchesNotCheckedIn);
 }
 
 function GetParticipantInfo(iRegNum)

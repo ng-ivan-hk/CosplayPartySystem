@@ -13,7 +13,7 @@
              be used by Cosplay Party helpers/staff.
   
 ----------------------------------------------------------------------
-  This program or any source codes of it may not be reproduced or 
+  This program and any source codes of it may not be reproduced or 
   distributed in any form without consent from The Animation and 
   Comics Association, HKUSU or from the author of this program.
 ===================================================================+*/
@@ -158,8 +158,20 @@ body.modeLUGGAGE input[type="button"]:hover{
 }
 
 /*********************************************************************
-  Subpanel PartiInfo Styles
+  Subpanel GroupEachParti & PartiInfo Styles
 *******************************************************************+*/
+.groupEachParti{
+  margin-bottom: 2em;
+  padding-bottom: 2em;
+  border-bottom: 1px solid #666666;
+}
+
+.groupEachParti:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
 .subpanelPartiInfo{
   margin-bottom: 2em;
 }
@@ -297,8 +309,8 @@ var CHandler = function()
   this.ShowOnePanel('panelSearch');
   this.m_strCurrentMode = "CHECKIN";
   this.ReloadPanels();
-  var that = this;
-  // Register event
+  var that = this; //for event handler to recognize this class instead of element
+  
   $( "#panelSearch form" ).submit(function(event)
   {
     that.Search();
@@ -308,28 +320,85 @@ var CHandler = function()
   {
     that.Search();
   });
-  $('nav #buttonCheckIn').click(function(event)
+  $('nav #buttonModeCheckIn').click(function(event)
   {
     that.m_strCurrentMode = "CHECKIN";
     that.ReloadPanels();
   });
-  $('nav #buttonLuggage').click(function(event)
+  $('nav #buttonModeLuggage').click(function(event)
   {
     that.m_strCurrentMode = "LUGGAGE";
     that.ReloadPanels();
   });
+  
+  /*--------------------------------------------------------------------
+  / When Check-in Button is clicked
+  --------------------------------------------------------------------*/
   $('#panelResult .buttonCheckIn').click(function(event)
-  {
-    that.CheckIn();
+  {   
+    // Find which groupEachParti element does this button belongs to
+    var iElemIndex = $( "#panelResult .groupEachParti .buttonCheckIn" ).index(this);
+    
+    // Hide check-in buttons and show loading instead
+    var jParentGroupEachParti = $(this).parents('.groupEachParti');
+    jParentGroupEachParti.find('.subpanelCheckIn').hide();
+    jParentGroupEachParti.find('.subpanelLoading').show();
+    jParentGroupEachParti.find('.messageDisplay').empty();
+    
+    // Get information needed
+    var iHiddenRegNum = jParentGroupEachParti.find('.subpanelCheckIn .hiddenRegNum').val();
+    iHiddenRegNum = parseInt(iHiddenRegNum);
+    
+    // Submit check-in request to server
+    console.log("Check-in Request", iHiddenRegNum);
+    google.script.run
+    .withSuccessHandler(function(json){that.DisplayPartiInfo(json, json.CheckInStatus == '1'?'成功登記！':'已取消登記！', iElemIndex);})
+    .withFailureHandler(function(e){ that.DisplayPartiInfo(null, e, iElemIndex); })
+    .CheckIn(iHiddenRegNum, "Note~");
   });
+  
+  /*--------------------------------------------------------------------
+  / When Update Luggage Button is clicked
+  --------------------------------------------------------------------*/
   $('#panelResult .buttonUpdateLuggage').click(function(event)
   {
-    that.UpdateLuggage();
+    // Find which groupEachParti element does this button belongs to
+    var iElemIndex = $( "#panelResult .groupEachParti .buttonUpdateLuggage" ).index(this);
+    
+    // Hide fields & buttons and show loading instead
+    var jParentGroupEachParti = $(this).parents('.groupEachParti');
+    jParentGroupEachParti.find('.subpanelLuggage').hide();
+    jParentGroupEachParti.find('.subpanelLoading').show();
+    jParentGroupEachParti.find('.messageDisplay').empty();
+    
+    // Get information needed
+    var iHiddenRegNum = jParentGroupEachParti.find('.subpanelLuggage .hiddenRegNum').val();
+    iHiddenRegNum = parseInt(iHiddenRegNum);
+    
+    var arrLuggages = []; //will be sent to server
+    jParentGroupEachParti.find('.subpanelLuggage .groupInputLuggages .groupInputEachLuggage').each(function(i){
+      //for each luggage, push its info to the array
+      var strLugNum = $(this).children('.fieldLugNum').val();
+      var strOut = $(this).children('.checkboxOut')[0].checked ? '1' : '0';
+      arrLuggages.push({"LugNum": strLugNum, "Out": strOut});
+    });
+    
+    // Submit update luggage request to server
+    console.log("Update Luggage Request", iHiddenRegNum, arrLuggages);
+    google.script.run
+    .withSuccessHandler(function(json){ that.DisplayPartiInfo(json, '行李資料已更新！', iElemIndex); })
+    .withFailureHandler(function(e){ that.DisplayPartiInfo(null, e, iElemIndex); })
+    .UpdateLuggages(iHiddenRegNum, arrLuggages, "LuggageNote~");
   });
+  
+  /*--------------------------------------------------------------------
+  / When Search Again Button is clicked
+  --------------------------------------------------------------------*/
   $('#panelResult .buttonSearchAgain').click(function(event)
   {
     that.ReloadPanels();
   });
+  
 };
 
 CHandler.prototype.Search = function()
@@ -361,37 +430,38 @@ CHandler.prototype.Search = function()
    }
 };
 
-CHandler.prototype.DisplayPartiInfo = function(jsonPartiInfo, strMessage)
+CHandler.prototype.DisplayPartiInfo = function(jsonPartiInfo, strMessage, iElemIndex = 0)
 {
   console.log("Received PartiInfo", jsonPartiInfo);
   
   // Display message
-  var strSubpanelElm = '.subpanelPartiInfo';
-  $(strSubpanelElm + ' .messageDisplay').html(strMessage ? strMessage : "");
-  $('.subpanelLoading').css('display', 'none');
+  var jGroupEachParti = $('#panelResult .groupEachParti').eq(iElemIndex);
+  
+  jGroupEachParti.find('.messageDisplay').html(strMessage ? strMessage : "");
+  jGroupEachParti.children('.subpanelLoading').hide();
   
   // Display Parti Info stored in json
   if(jsonPartiInfo){
   
-    $(strSubpanelElm + ' .tdRegNum').html(jsonPartiInfo.RegNum);
-    $(strSubpanelElm + ' .tdName').html(jsonPartiInfo.Name);
-    $(strSubpanelElm + ' .tdGender').html(jsonPartiInfo.Gender);
-    $(strSubpanelElm + ' .tdPhone').html(jsonPartiInfo.Phone);
-    $(strSubpanelElm + ' .tdEmail').html(jsonPartiInfo.Email);
-    $(strSubpanelElm + ' .tdUID').html(jsonPartiInfo.UID);
-    $(strSubpanelElm + ' .tdACANum').html(jsonPartiInfo.ACANum);
-    $(strSubpanelElm + ' .tdRole').html(jsonPartiInfo.Role);
-    $(strSubpanelElm + ' .tdResponseTime').html(jsonPartiInfo.ResponseTime);
-    $(strSubpanelElm + ' .tdCheckInStatus').html(jsonPartiInfo.CheckInStatus == '1'? 
+    jGroupEachParti.find('.tdRegNum').html(jsonPartiInfo.RegNum);
+    jGroupEachParti.find('.tdName').html(jsonPartiInfo.Name);
+    jGroupEachParti.find('.tdGender').html(jsonPartiInfo.Gender);
+    jGroupEachParti.find('.tdPhone').html(jsonPartiInfo.Phone);
+    jGroupEachParti.find('.tdEmail').html(jsonPartiInfo.Email);
+    jGroupEachParti.find('.tdUID').html(jsonPartiInfo.UID);
+    jGroupEachParti.find('.tdACANum').html(jsonPartiInfo.ACANum);
+    jGroupEachParti.find('.tdRole').html(jsonPartiInfo.Role);
+    jGroupEachParti.find('.tdResponseTime').html(jsonPartiInfo.ResponseTime);
+    jGroupEachParti.find('.tdCheckInStatus').html(jsonPartiInfo.CheckInStatus == '1'? 
       '<span class="checkInStatus1">已登記</span>' :
       '<span class="checkInStatus0">尚未登記</span>');
     
-    $(strSubpanelElm + ' .tdLuggage').empty();
+    jGroupEachParti.find('.tdLuggage').empty();
     for(var i = 0; i < jsonPartiInfo.Luggages.length; i++)
     {
       var strLugNum = jsonPartiInfo.Luggages[i].LugNum;
       var strLugStatus = parseInt(jsonPartiInfo.Luggages[i].Out) == 1? 'Out' : 'In';
-      $(strSubpanelElm + ' .tdLuggage').append( strLugNum + " (" + strLugStatus + ") ");
+      jGroupEachParti.find('.tdLuggage').append( strLugNum + " (" + strLugStatus + ") ");
     }
   
   }
@@ -400,16 +470,16 @@ CHandler.prototype.DisplayPartiInfo = function(jsonPartiInfo, strMessage)
   if(this.m_strCurrentMode == "CHECKIN")
   {
     if(jsonPartiInfo){
-      $('.subpanelCheckIn .hiddenRegNum').val(jsonPartiInfo.RegNum);
-      $('.subpanelCheckIn .buttonCheckIn').val(jsonPartiInfo.CheckInStatus == '1'? '取消登記' : '登記');
+      jGroupEachParti.find('.subpanelCheckIn .hiddenRegNum').val(jsonPartiInfo.RegNum);
+      jGroupEachParti.find('.subpanelCheckIn .buttonCheckIn').val(jsonPartiInfo.CheckInStatus == '1'? '取消登記' : '登記');
     }
-    $('.subpanelCheckIn').css('display', 'block');
+    jGroupEachParti.find('.subpanelCheckIn').show();
   }
   else if(this.m_strCurrentMode == "LUGGAGE")
   {
     if(jsonPartiInfo){
-      $('.subpanelLuggage .hiddenRegNum').val(jsonPartiInfo.RegNum);
-      $('.subpanelLuggage .groupInputLuggages .groupInputEachLuggage').each(function(index){
+      jGroupEachParti.find('.subpanelLuggage .hiddenRegNum').val(jsonPartiInfo.RegNum);
+      jGroupEachParti.find('.subpanelLuggage .groupInputLuggages .groupInputEachLuggage').each(function(index){
         if(!jsonPartiInfo.Luggages[index])
           return;
         var strLugNum = jsonPartiInfo.Luggages[index].LugNum;
@@ -419,108 +489,77 @@ CHandler.prototype.DisplayPartiInfo = function(jsonPartiInfo, strMessage)
         
       });
     }
-    $('.subpanelLuggage').css('display', 'block');
+    jGroupEachParti.find('.subpanelLuggage').show();
   }
   
   // Everything all set, display the result panel!
   this.ShowOnePanel('panelResult');
 };
   
-CHandler.prototype.DisplayMultiplePartiInfo = function(arrMatchRegNums)
+CHandler.prototype.DisplayMultiplePartiInfo = function(arrPartiInfoMatches)
 {
-  if(arrMatchRegNums.length == 0)
+  console.log("Received MultiplePartiInfo", arrPartiInfoMatches);
+  
+  if     (arrPartiInfoMatches.length == 0) this.OnFailure({message: "此電話號碼並未登記。"});
+  else if(arrPartiInfoMatches.length == 1) this.DisplayPartiInfo(arrPartiInfoMatches[0]);
+  else //more than one
   {
-    this.OnFailure({message: "此電話號碼並未登記。"});
+    $('#messageMultiParti').show();
+    
+    this.DisplayPartiInfo(arrPartiInfoMatches[0], null, 0);
+    
+    var jGroupEachParti = $('#panelResult .groupEachParti');
+    for(var i = 1; i < arrPartiInfoMatches.length; i++)
+    {
+      var jNewClone = jGroupEachParti.clone(true, true).insertAfter(jGroupEachParti);
+      
+      //make every pair of input[type=checkbox] & label unique
+      
+      
+      jNewClone.find('.groupInputEachLuggage').each(function(index){
+        var strNewId = 'L' + i + '-' + index ;
+        $(this).children('.checkboxOut').attr('id', strNewId);
+        $(this).children('label').attr('for', strNewId);
+      });
+      
+      this.DisplayPartiInfo(arrPartiInfoMatches[i], null, i);
+    }
   }
-  else if(arrMatchRegNums.length == 1)
-  {
-    this.DisplayPartiInfo(arrMatchRegNums[0]);
-  }
-  else
-  {
-    this.OnFailure({message: JSON.stringify(arrMatchRegNums)});
-  }
-};
-
-CHandler.prototype.CheckIn = function()
-{
-  // Hide check-in buttons and show loading instead
-  $('.subpanelCheckIn').css('display', 'none');
-  $('.subpanelLoading').css('display', 'block');
-  $('.messageDisplay').empty();
-  
-  // Get information needed
-  var iHiddenRegNum = $('.subpanelCheckIn .hiddenRegNum').val();
-  iHiddenRegNum = parseInt(iHiddenRegNum);
-  
-  // Submit check-in request to server
-  console.log("Check-in Request", iHiddenRegNum);
-  var that = this;
-  google.script.run
-  .withSuccessHandler(function(json){ that.DisplayPartiInfo(json, json.CheckInStatus == '1'? '成功登記！' : '已取消登記！'); })
-  .withFailureHandler(function(e){ that.DisplayPartiInfo(null, e); })
-  .CheckIn(iHiddenRegNum, "Note~");
-};
-
-CHandler.prototype.UpdateLuggage = function()
-{
-  // Hide fields & buttons and show loading instead
-  $('.subpanelLuggage').css('display', 'none');
-  $('.subpanelLoading').css('display', 'block');
-  $('.messageDisplay').empty();
-  
-  // Get information needed
-  var iHiddenRegNum = $('.subpanelLuggage .hiddenRegNum').val();
-  iHiddenRegNum = parseInt(iHiddenRegNum);
-  
-  var arrLuggages = []; //will be sent to server
-  $('.subpanelLuggage .groupInputLuggages .groupInputEachLuggage').each(function(i){
-    //for each luggage, push its info to the array
-    var strLugNum = $(this).children('.fieldLugNum').val();
-    var strOut = $(this).children('.checkboxOut')[0].checked ? '1' : '0';
-    arrLuggages.push({"LugNum": strLugNum, "Out": strOut});
-  });
-  
-  // Submit update luggage request to server
-  console.log("Update Luggage Request", iHiddenRegNum, arrLuggages);
-  var that = this;
-  google.script.run
-  .withSuccessHandler(function(json){ that.DisplayPartiInfo(json, '行李資料已更新！'); })
-  .withFailureHandler(function(e){ that.DisplayPartiInfo(null, e); })
-  .UpdateLuggages(iHiddenRegNum, arrLuggages, "LuggageNote~");
 };
 
 CHandler.prototype.ReloadPanels = function()
 {
   // Clear & reset elements
   document.getElementById("messageError").innerHTML = "&nbsp;";
-  $('.subpanelLuggage').css('display', 'none');
-  $('.subpanelCheckIn').css('display', 'none');
+  $('.subpanelLuggage').hide();
+  $('.subpanelCheckIn').hide();
   $('.tdLuggage').empty();
-  this.ShowOnePanel('panelSearch');
+  $('#messageMultiParti').hide();
+  $('#panelResult .groupEachParti').nextAll().remove(); //just keep one copy, remove all others
   
   // UI update for current mode
   if(this.m_strCurrentMode == "CHECKIN")
   {
     $('nav .buttonMode').removeClass('buttonModeCurrent');
-    $('nav #buttonCheckIn').addClass('buttonModeCurrent');
+    $('nav #buttonModeCheckIn').addClass('buttonModeCurrent');
     $('body').removeClass().addClass('modeCHECKIN');
   }
   else if(this.m_strCurrentMode == "LUGGAGE")
   {
     $('nav .buttonMode').removeClass('buttonModeCurrent');
-    $('nav #buttonLuggage').addClass('buttonModeCurrent');
+    $('nav #buttonModeLuggage').addClass('buttonModeCurrent');
     $('body').removeClass().addClass('modeLUGGAGE');
   }
+  this.ShowOnePanel('panelSearch');
   $('#panelSearch .fieldSearch').select();
 };
 
 CHandler.prototype.ShowOnePanel = function(strPanelToShow)
 {
-  document.getElementById('panelSearch').style.display = "none";
-  document.getElementById('panelLoading').style.display = "none";
-  document.getElementById('panelResult').style.display = "none";
-  document.getElementById(strPanelToShow).style.display = "block";
+  $('#panelSearch').hide();
+  $('#panelLoading').hide();
+  $('#panelResult').hide();
+  $('#' + strPanelToShow).show();
 };
 
 CHandler.prototype.OnFailure = function(error)
@@ -547,7 +586,7 @@ $(document).ready(function()
 <div id="app">
 
   <nav>
-    <span id="buttonCheckIn" class="buttonMode">Check-in 登記</span><span id="buttonLuggage" class="buttonMode">Luggage 行李寄存</span>
+    <span id="buttonModeCheckIn" class="buttonMode">Check-in 登記</span><span id="buttonModeLuggage" class="buttonMode">Luggage 行李寄存</span>
   </nav>
   
   <div id="panels">
@@ -566,8 +605,9 @@ $(document).ready(function()
     <div id="panelResult">
     
       <p id="messageMultiParti">
-        此電話號碼被登記了超過一次。請確認以下哪項資料才是正確的。<br />
-        如果資料大致相同，請登記最上面那項資料（即參加者第一次網上交表時的資料）。<br />
+        <span style="color:red">此電話號碼被登記了超過一次。請確認以下哪項資料才是正確的。</span><br />
+        以下幾項資料中，「已登記」狀態的會排在最上面，之後則會按網上交表時間排列。<br />
+        如果資料大致相同，請為最上面的資料進行登記或更新行李（即參加者第一次網上交表時的資料）。<br />
         如果資料不太一樣（尤其是姓名），請和參加者核對哪項才是正確的資料。
       </p>
       
@@ -608,7 +648,7 @@ $(document).ready(function()
               <? for (var i = 0; i < LUGGAGE_MAX; i++) { ?>
               <div class="groupInputEachLuggage">
                 <input type="text" class="fieldLugNum" placeholder="無" autocomplete='off' />
-                <input type="checkbox" class="checkboxOut" id="L<?=i ?>" /><label for="L<?=i ?>">取走</label>
+                <input type="checkbox" class="checkboxOut" id="L0-<?=i ?>" /><label for="L0-<?=i ?>">取走</label>
               </div>
               <? } ?>
               
