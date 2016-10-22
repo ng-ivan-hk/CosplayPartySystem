@@ -1,0 +1,254 @@
+<? //----- common.html ----- ?>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta data-name="cpversion" content="<?!= CP_VERSION ?>" />
+
+<script>
+window.hideAndDisplay = function(toHide, toDisplay) {
+  if(toHide){
+    document.getElementById(toHide).style.display = "none";
+  }
+  if(toDisplay){
+    document.getElementById(toDisplay).style.display = "inline";
+  }
+
+};
+</script>
+
+<style>
+/* 
+ * ================================
+ *          Common Style
+ * ================================
+ */
+body{
+  font-family: "Microsoft JhengHei", Tahoma, Verdana, Arial, sans-serif;
+  background-color: #f0f9ff;
+}
+label, input[type="checkbox"], input[type="radio"]{
+  cursor: pointer;
+}
+
+/* 
+ * ================================
+ *        Front End (index)
+ * ================================
+ */
+.index{
+  background-color: #ffffff;
+  font-size: 15px;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+  border: 1px solid #cccccc;
+  margin: 20px auto;
+  padding: 20px;
+  min-width: 500px;
+  max-width: 900px;
+}
+.index #header{
+  font-size: 25px;
+}
+.index input[type="text"]{
+  font-family: Arial;
+  padding: 5px;
+  border: solid 2px #cccccc;
+  transition: border 0.2s, background-color 0.2s;
+  width: 200px;
+}
+.index input[type="text"]:focus{
+  outline: none;
+  border-color: #0099CC;
+  background-color: #ffffee;
+}
+.index input[type="button"]{
+  padding: 6px 12px 6px 12px ;
+  color: #ffffff;
+  font-weight: bold;
+  border: 1px solid #3079ed;
+  background-color: #4d90fe;
+  cursor: pointer;
+}
+.index input[type="button"]:hover{
+  background-color: #6ea5ff;
+}
+.index input[type="button"]:active{
+  background-color: #2761c2;
+}
+.index label{
+  display:inline-block;
+  padding-top: 10px;
+  color: #2756a1;
+}
+.index form p{
+  margin: 10px 0px 10px 0px;
+  padding: 10px;
+}
+.index .input{
+  transition: background-color 0.2s;
+}
+.index .input:hover{
+  background-color: rgba(245, 255, 255, 0.7);
+}
+.index #page_form form{
+  background: #ffffff url("https://lh4.googleusercontent.com/SBbHibKwoQ_3zYvqPKxJoYhnDPctRlMmhaD-p1cIaaKJkQndsiSgylSB3-URlckFApym") no-repeat right bottom;
+}
+
+/* 
+ * ================================
+ *        Back End (user pages)
+ * ================================
+ */
+nav{
+  text-align: right;
+  min-width: 500px;
+}
+nav a{
+  white-space: nowrap;
+  margin-left: -4px;
+  padding: 10px 20px 10px 20px;
+  text-decoration: none;
+  transition: color 0.2s, background-color 0.2s, box-shadow 0.1s;
+  color: #5c1f99;
+}
+nav a:hover{
+  background-color: #5c1f99;
+  color: #ffffff;
+}
+nav a:active, body#checkin a#checkin, body#walkin a#walkin, body#luggage a#luggage{
+  background-color: #5c1f99;
+  color: #ffffff;
+  box-shadow: inset 3px 6px 5px rgba(0,0,0,0.8);
+}
+.user{
+  background-color: #ffffff;
+  font-size: 25px;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+  margin: 10px 20px 5px 20px;
+  padding: 20px;
+  min-width: 500px;
+  background: #ffffff url("https://lh4.googleusercontent.com/SBbHibKwoQ_3zYvqPKxJoYhnDPctRlMmhaD-p1cIaaKJkQndsiSgylSB3-URlckFApym") no-repeat right top;
+
+}
+
+.user input[type="text"]{
+  font-family: Arial;
+  padding: 8px;
+  border: solid 2px #e8e8e8;
+  transition: border 0.2s, background-color 0.2s;
+  width: 120px;
+  font-size: 15px;
+}
+.user input[type="text"]:focus{
+  outline: none;
+  border-color: #0099CC;
+  background-color: #ffffee;
+}
+.user input[type="button"]{
+  padding: 10px 12px 10px 12px;
+  box-shadow: 1px 1px 8px rgba(0,0,0,0.2);
+  font-size: 15px;
+  color: #ffffff;
+  font-weight: bold;
+  border: 0;
+  background-color: #4d90fe;
+  cursor: pointer;
+}
+.user input[type="button"]:hover{
+  background-color: #6ea5ff;
+}
+
+.user input[type="button"]:active{
+  background-color: #2761c2;
+}
+
+
+/* Checkbox begin */
+input[type=checkbox] + label {
+    display: inline-block;
+    cursor: pointer;
+    position: relative;
+    padding-left: 35px;
+    margin-left: 0px;
+    margin-right: 15px;
+    font-size: 25px;
+}
+input[type=checkbox] + label:before {
+    content: "";
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    margin-right: 10px;
+    position: absolute;
+    left: 5px;
+    bottom: 3px;
+    border: 1px solid #555555;
+    background-color: rgba(255, 255, 255, 0.5);
+    box-shadow: inset 2px 2px 3px rgba(0, 0, 0, 0.5);
+}
+input[type=checkbox] {
+    display: none;
+}
+input[type=checkbox]:checked + label:before {
+    content: "\2713"; /* a tick */
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+    font-size: 25px;
+    color: black;
+    text-align: center;
+    line-height: 25px;
+}
+
+/* Checkbox end */
+
+
+.user fieldset{
+  border: 2px solid black;
+  background-color: rgba(255,255,255,0.7);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+}
+
+.user table{
+  margin-top: 5px;
+  border-collapse: collapse;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+}
+.user table, th, td {
+  border: 0;
+  font-size: 18px;
+  padding: 4px 8px 4px 8px;
+}
+/*.user tr{
+  border-bottom: 1px solid #ffffff;
+}
+.user tr:last-child {
+    border-bottom: 0;
+}*/
+.user th{
+  background-color: rgba(102, 204, 255, 0.7);
+}
+.user td{
+  transition: background-color 0.2s;
+  background-color: rgba(220, 255, 255, 0.7);
+}
+.user td:hover{
+  background-color: rgba(255, 255, 0, 0.2);
+}
+
+
+
+/* For check-in */
+.arrived{
+  background-color: #ffff99;
+}
+
+.paid{
+  background-color: #99ff99;
+}
+
+/* For luggage */
+.luggageNone{
+  background-color: #f7f7f7;
+}
+.luggageOut{
+  background-color: #3399ff;
+  border-color: #3079ed !important;
+}
+</style>
