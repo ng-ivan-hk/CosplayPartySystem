@@ -1,0 +1,151 @@
+<? //----- index.html ----- ?>
+<?!= include('common') ?>
+<? if (FRONT_END) { ?>
+
+<script>
+var reloadHTML = '<input onclick="reloadForm()" type="button" value="重試" />';
+function submitForm() {
+  
+  hideAndDisplay('page_form', 'page_loading');
+  google.script.run.withSuccessHandler(submitSuccess).withFailureHandler(submitFail).onlineRegister(document.forms['index']);
+
+}
+
+function submitSuccess(json){
+
+  if(json.status == "success"){ //Success
+    document.getElementById("page_result").innerHTML = "您的登記號碼是：" + json.regNumber + "<br>請記下登記號碼。<br>您的登記已經完成。確認電郵將寄到您的電郵地址：" + json.email;
+  } else { //Error
+    if(json.status == "error"){
+      var message = json.message;
+    } else {
+      var message = "Unknown";
+    }
+    document.getElementById("page_result").innerHTML = "錯誤： " + json.message + reloadHTML;
+    
+  }
+  
+  hideAndDisplay('page_loading', 'page_result');
+  
+}
+
+function submitFail(json){
+  document.getElementById("page_result").innerHTML = "Error: Failure Handler" + reloadHTML;
+  hideAndDisplay('page_loading', 'page_result');
+}
+
+function reloadForm(){
+  hideAndDisplay('page_result', 'page_form');
+}
+
+</script>
+
+
+<div id="index" class="index">
+
+  <div id="header">
+    <b>香港大學學生會動漫聯盟 - HKU Cosplay Party 2015 網上登記表格 (開發版本)</b>
+  </div>
+
+  <div id="page_notice">
+  <p>
+  <span style="color:red">此為範本，仍待修改</span><br />
+  煩請各參加者花少許時間完成登記表格，以方便本會記錄。<br />
+  登記注意事項：<br />
+  1. 登記完成後將會顯示登記號碼以證明登記完成。請參加者牢記登記號碼，以縮減在會場的等候時間。<br />
+  2. 網上登記後在Cosplay Party當日仍需以登記號碼前往登記室(LE2)辦理登入手續。<br />
+  3. 請於登記時付港幣5元的登記及活動費用（將不獲退還）。<br />
+  4. 使用更衣室服務需出示有效身份證明文件以證明性別。<br /><br />
+  
+  </p>
+  
+  <input onclick="hideAndDisplay('page_notice', 'page_form')" type="button" value="確定 Confirm" />
+  </div>
+  
+  <div id="page_form" style="display:none">
+
+    <form id="index">
+    
+      <p style="color:red">*請填寫所有欄位</p>
+    
+      <p class="input">
+        姓名 Name
+        <br /><input type="text" name="name" />
+      </p>
+      
+      <p class="input">
+        暱稱 Nickname
+        <br /><input type="text" name="nickname" />
+      </p>
+      
+      <p class="input">
+        性別 Gender
+        <br /><label><input type="radio" name="gender" value="male" checked>男 Male</label>
+        <br /><label><input type="radio" name="gender" value="female">女 Female</label>
+      </p>
+      
+      <p class="input">
+        聯絡電話 Phone number
+        <br /><input type="text" id="phone" name="phone" maxlength="8" />
+      </p>
+      
+      <p class="input">
+        電郵地址 Email address (登記確認電郵將寄至此)
+        <br /><input type="text" id="email" name="email" />
+      </p>
+      
+      <p class="input">
+        閣下是Cosplayer還是攝影師？（如均是，請選擇攝影師）<br />
+        Are you a cosplayer or a photographer? (If both, please choose photographer)
+        <br /><label><input type="radio" name="role" value="cosplayer" checked>Cosplayer</label>
+        <br /><label><input type="radio" name="role" value="photographer">攝影師 Photographer</label>
+      </p>
+      
+      <p class="input">
+        閣下從甚麼途徑得知是次活動? How did you know the event? 
+        <br /><label><input type="radio" name="source" value="socweb" checked>本會網站 Society Website</label>
+        <br /><label><input type="radio" name="source" value="socfb">本會Facebook專頁 Society Facebook Page</label>
+        <br /><label><input type="radio" name="source" value="friends">朋友 Friends</label>
+        <br /><label><input type="radio" name="source" value="forums">論壇 Forums</label>
+        <br /><label><input type="radio" name="source" value="search">搜索引擎 Search Engines</label>
+        <br /><label><input type="radio" name="source" value="others" id="others" >其他 Others:&nbsp
+        <input type="text" name="sourceText" placeholder="填寫得知方式..." onfocus="document.getElementById('others').checked=true;" /></label>
+      </p>
+      
+      
+      <p>
+        <input onclick="submitForm()" type="button" value="登記 Register" />
+      </p>
+      
+    </form>
+  </div>
+  
+  
+  
+  <div id="page_loading" style="display:none">
+  <!--<img src="https://drive.google.com/uc?export=download&id=0BzvSggqIorVjQXFvbmVWV0NDd2s" alt="Loading..." title="Loading...">-->Loading...
+  </div>
+  
+  <div id="page_result" style="display:none">
+  Result
+  </div>
+
+</div>
+
+<? } else { ?>
+
+<div id="index" class="index">
+
+  <div id="header">
+    <b>香港大學學生會動漫聯盟 - HKU Cosplay Party 2015 網上登記表格</b>
+  </div>
+  
+  <p>
+  HKU Cosplay Party 2015 網上登記表格已經關閉。即使仍未填寫表格也不要緊，各位仍可在活動當天前來登記室進行即場登記，並領取登記卡。
+  期望在當天看見大家～<br /><br />
+  
+  香港大學學生會動漫聯盟 啟
+  </p>
+</div>
+
+<? } ?>
