@@ -1,0 +1,92 @@
+<? //----- user_checkin.html ----- ?>
+<?!= include('common') ?>
+<?!= include('nav') ?>
+
+<script>
+function checkCosplayer(){
+
+  hideAndDisplay('page_result', 'page_loading');
+  google.script.run.withSuccessHandler(checkCosplayerSuccess).withFailureHandler(onFailure).checkCosplayer(document.forms['form_check']);
+
+}
+
+function setCosplayer(){
+
+  if(!document.forms['form_set'].paid.checked){
+    if(!confirm("未付款。確定要繼續？")){
+      return;
+    }
+  }
+
+  hideAndDisplay('page_result', 'page_loading');
+  google.script.run.withSuccessHandler(setCosplayerSuccess).withFailureHandler(onFailure).setCosplayer(document.forms['form_set']);
+}
+
+function checkCosplayerSuccess(json){
+   if(json.status == "success"){
+  
+    var htmltxt = '', htmlform = '';
+    
+    //For printing info about that cosplayer
+    htmltxt += '<table>';
+    htmltxt += '<tr><th>登記編號</th><td>' + json.regNumber + '</td>';
+    htmltxt += '<th>性別</th><td>' + json.gender + '</td></tr>';
+    htmltxt += '<tr><th>姓名</th><td>' + json.name + '</td>';
+    htmltxt += '<th>電話</th><td>' + json.phone + '</td></tr>';
+    htmltxt += '<tr><th>暱稱</th><td>' + json.nickname + '</td>';
+    htmltxt += '<th>身份</th><td>' + json.role + '</td></tr>';
+    htmltxt += '<tr><th>電郵</th><td>' + json.email + '</td></tr>';
+    htmltxt += '</table>';
+    
+    htmlform += '<form id="form_set" onsubmit="return false;"><fieldset><legend>Check in</legend>';    
+    htmlform += '<input type="checkbox" id="arrived" name="arrived" ' + (json.arrived ? 'checked' : '')  + ' /><label for="arrived"' + (json.arrived ? ' class="arrived"' : '') + '>簽到</label><br>';
+    htmlform += '<input type="checkbox" id="paid" name="paid" ' + (json.paid ? 'checked' : '') + ' /><label for="paid"' + (json.paid ? ' class="paid"' : '') + '>付款</label>';
+    htmlform += '<br>備註：<input type="text" name="notes" value="' + json.notes + '" placeholder="輸入任何備註..." style="width:300px" />';
+    htmlform += '<input type="hidden" id="regNumber" name="regNumber" value="' + json.regNumber + '" />';
+    htmlform += '<br><input onclick="setCosplayer()" type="button" value="更改" />';
+    htmlform += '</fieldset></form>';
+
+    document.getElementById("page_result").innerHTML = htmltxt + htmlform;
+    
+  } else if (json.status == "error"){
+    document.getElementById("page_result").innerHTML = "錯誤：" + json.message;
+  }
+  hideAndDisplay('page_loading', 'page_result');
+}
+
+function setCosplayerSuccess(json){
+  checkCosplayerSuccess(json);
+}
+
+function onFailure(error){
+  document.getElementById("page_result").innerHTML = "Error from Failure Handler: " + error.message;
+  hideAndDisplay('page_loading', 'page_result');
+}
+
+document.body.id = 'checkin';
+</script>
+
+<div id="user_checkin" class="user">
+
+  <div id="header">
+    <b>2015 CP Check-in 測試</b>
+  </div>
+  
+  <div id="page_form">
+    <form id="form_check" onsubmit="checkCosplayer();return false;">
+    
+    登記編號或電話：
+    <input type="text" id="regNumber" name="regNumber" placeholder="例：1 或 R0001" maxlength="8" autocomplete='off' autofocus />  
+    <input onclick="checkCosplayer()" type="button" value="搜尋" />
+    </form>
+  </div>
+  
+  <div id="page_loading" style="display:none">
+  Loading...
+  </div>
+
+  <div id="page_result" style="display:none">
+  Result
+  </div>
+
+</div>
