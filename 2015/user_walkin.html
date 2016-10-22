@@ -1,0 +1,131 @@
+<? //----- user_walkin.html ----- ?>
+<?!= include('common') ?>
+<?!= include('nav') ?>
+
+<script>
+var reloadHTML = '<input onclick="reloadForm()" type="button" value="重試" />';
+var newFormHTML = '<input onclick="resetForm();reloadForm()" type="button" value="填寫新表格" />';
+function submitForm() {
+
+  if(!document.forms['form_walkin'].paid.checked){
+    if(!confirm("未付款。確定要繼續？")){
+      return;
+    }
+  }
+  
+  hideAndDisplay('page_form', 'page_loading');
+  google.script.run.withSuccessHandler(submitSuccess).withFailureHandler(onFailure).walkinRegister(document.forms['form_walkin']);
+
+}
+
+function submitSuccess(json){
+
+  if(json.status == "success"){ //Success
+    document.getElementById("page_result").innerHTML = "登記號碼：" + json.regNumber + '<br>' + newFormHTML;
+  } else { //Error
+    if(json.status == "error"){
+      var message = json.message;
+    } else {
+      var message = "Unknown";
+    }
+    document.getElementById("page_result").innerHTML = "錯誤： " + json.message + reloadHTML;
+    
+  }
+  
+  hideAndDisplay('page_loading', 'page_result');
+  
+}
+
+function onFailure(error){
+  document.getElementById("page_result").innerHTML = "Error from Failure Handler: " + error.message;
+  hideAndDisplay('page_loading', 'page_result');
+}
+
+function reloadForm(){
+  hideAndDisplay('page_result', 'page_form');
+}
+
+function resetForm(){
+  document.forms['form_walkin'].reset();
+}
+
+document.body.id = 'walkin';
+</script>
+
+<div id="user_walkin" class="user">
+
+  <div id="header">
+    <b>2015 CP Walk-in 測試</b>
+  </div>
+  
+  <div id="page_form">
+    <form id="form_walkin">
+    
+      <p style="color:red">*請填寫所有欄位</p>
+    
+      <p class="input">
+        姓名 Name
+        <br /><input type="text" name="name" />
+      </p>
+      
+      <p class="input">
+        暱稱 Nickname
+        <br /><input type="text" name="nickname" />
+      </p>
+      
+      <p class="input">
+        性別 Gender
+        <br /><label><input type="radio" name="gender" value="male" checked>男 Male</label>
+        <br /><label><input type="radio" name="gender" value="female">女 Female</label>
+      </p>
+      
+      <p class="input">
+        聯絡電話 Phone number
+        <br /><input type="text" id="phone" name="phone" maxlength="8" />
+      </p>
+      
+      <p class="input">
+        電郵地址 Email address
+        <br /><input type="text" id="email" name="email" />
+      </p>
+      
+      <p class="input">
+        閣下是Cosplayer還是攝影師？（如均是，請選擇攝影師）<br />
+        Are you a cosplayer or a photographer? (If both, please choose photographer)
+        <br /><label><input type="radio" name="role" value="cosplayer" checked>Cosplayer</label>
+        <br /><label><input type="radio" name="role" value="photographer">攝影師 Photographer</label>
+      </p>
+      
+      <p class="input">
+        閣下從甚麼途徑得知是次活動? How did you know the event? 
+        <br /><label><input type="radio" name="source" value="socweb" checked>本會網站 Society Website</label>
+        <br /><label><input type="radio" name="source" value="socfb">本會Facebook專頁 Society Facebook Page</label>
+        <br /><label><input type="radio" name="source" value="friends">朋友 Friends</label>
+        <br /><label><input type="radio" name="source" value="forums">論壇 Forums</label>
+        <br /><label><input type="radio" name="source" value="search">搜索引擎 Search Engines</label>
+        <br /><label><input type="radio" name="source" value="others" id="others" >其他 Others&nbsp</label>
+        <input type="text" name="sourceText" placeholder="填寫得知方式..." onfocus="document.getElementById('others').checked=true;" />
+      </p>
+      
+      <p>
+        <input type="checkbox" id="paid" name="paid" /><label for="paid">付款</label>
+        <br />備註：<input type="text" name="notes" placeholder="輸入任何備註..." style="width:300px" />
+      </p>
+      
+      
+      <p>
+        <input onclick="submitForm()" type="button" value="登記 Register" />
+      </p>
+      
+    </form>
+  </div>
+  
+  <div id="page_loading" style="display:none">
+  Loading...
+  </div>
+  
+  <div id="page_result" style="display:none">
+  Result
+  </div>
+
+</div>
