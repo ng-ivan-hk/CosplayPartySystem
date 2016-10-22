@@ -1,0 +1,646 @@
+<?
+/*+===================================================================
+  File:      index.html
+  
+  Author:    Ivan Ng
+             Information Secretary of Session 2013 - 2014
+  
+  Created:   17 Oct 2016
+  
+  Updated:   21 Oct 2016
+  
+  Summary:   Client-side implementation of the System, intended to 
+             be used by Cosplay Party helpers/staff.
+  
+----------------------------------------------------------------------
+  This program or any source codes of it may not be reproduced or 
+  distributed in any form without consent from The Animation and 
+  Comics Association, HKUSU or from the author of this program.
+===================================================================+*/
+?>
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta data-name="app_version" content="<?= APP_VERSION ?>" />
+<? 
+var modeCHECKIN = 
+{
+  color: '#ae2f32' //default: #ae2f32
+};
+var modeLUGGAGE =
+{
+  color: '#223988' //default: #223988
+};
+?>
+<style>
+/*********************************************************************
+  Body styles
+*******************************************************************+*/
+body{
+  font-family: "Microsoft JhengHei", Tahoma, Verdana, Arial, sans-serif;
+  font-size:  16px;
+  background-color: #000000;
+  margin: 2em;
+}
+body.modeCHECKIN{
+  background-color: <?= modeCHECKIN.color ?>;
+}
+body.modeLUGGAGE{
+  background-color: <?= modeLUGGAGE.color ?>;
+}
+/*********************************************************************
+  Header styles
+*******************************************************************+*/
+header{
+  color: #ffffff;
+}
+/*********************************************************************
+  Footer styles
+*******************************************************************+*/
+footer{
+  font-size: 0.85em;
+  color: #ffffff;
+}
+footer p{
+  text-align: center;
+}
+footer p a{
+  color: white;
+}
+/*********************************************************************
+  Navigation (Mode Buttons) styles
+*******************************************************************+*/
+nav{
+  padding: 0;
+  margin-bottom: -1px;
+}
+.buttonMode{
+  margin: 0;
+  padding: 14px 24px 15px;
+  background-color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  display: inline-block;
+}
+.buttonModeCurrent{
+  padding: 16px 24px;
+  font-weight: bold;
+  background-color: #ffffff;
+  border-top: 1px solid #666666;
+  border-left: 1px solid #666666;
+  border-right: 1px solid #666666;
+  border-bottom: 0;
+}
+body.modeCHECKIN .buttonModeCurrent{
+  color: <?= modeCHECKIN.color ?>;
+}
+body.modeLUGGAGE .buttonModeCurrent{
+  color: <?= modeLUGGAGE.color ?>;
+}
+/*********************************************************************
+  Panels styles
+*******************************************************************+*/
+#panels{
+  background-color: #ffffff;
+  border: 1px solid #666666;
+  padding: 2em;
+  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+}
+#messageError{
+  color: red;
+}
+input[type="text"]{
+  font-family:inherit;
+  font-size: inherit;
+  padding: 0.5em;
+  border: solid 1px #c8c8c8;
+  transition: border 0.2s, background-color 0.2s;
+  width: 15em;
+}
+input[type="text"]:focus{
+  outline: none;
+  border-color: #0099CC;
+  background-color: #ffffee;
+}
+body.modeCHECKIN input[type="text"]:focus{
+  border-color: <?= modeCHECKIN.color ?>;
+}
+body.modeLUGGAGE input[type="text"]:focus{
+  border-color: <?= modeLUGGAGE.color ?>;
+}
+input[type="button"]{
+  font-family:inherit;
+  font-size: inherit;
+  color: #ffffff;
+  padding: 0.5em 0.8em;
+  border: 1px solid black;
+  background-color: black;
+  cursor: pointer;
+  transition: color 0.2s, background-color 0.2s;
+}
+body.modeCHECKIN input[type="button"]{
+  border-color: <?= modeCHECKIN.color ?>;
+  background-color: <?= modeCHECKIN.color ?>;
+}
+body.modeLUGGAGE input[type="button"]{
+  border-color: <?= modeLUGGAGE.color ?>;
+  background-color: <?= modeLUGGAGE.color ?>;
+}
+body.modeCHECKIN input[type="button"]:hover{
+  background-color: #ffffff;
+  color: <?= modeCHECKIN.color ?>;
+}
+body.modeLUGGAGE input[type="button"]:hover{
+  background-color: #ffffff;
+  color: <?= modeLUGGAGE.color ?>;
+}
+
+/*********************************************************************
+  Subpanel PartiInfo Styles
+*******************************************************************+*/
+.subpanelPartiInfo{
+  margin-bottom: 2em;
+}
+.subpanelPartiInfo table, td, tr{
+  border: 0;
+  border-spacing: 10px;
+  border-collapse: separate;
+}
+.subpanelPartiInfo table{
+  width: 100%;
+}
+.subpanelPartiInfo th{
+  font-weight: normal;
+  width:1%;
+  white-space:nowrap;
+}
+.subpanelPartiInfo .thLuggage{
+  width: 50%;
+}
+
+body.modeCHECKIN .subpanelPartiInfo th{
+  color: <?= modeCHECKIN.color ?>;
+}
+body.modeLUGGAGE .subpanelPartiInfo th{
+  color: <?= modeLUGGAGE.color ?>;
+}
+body.modeCHECKIN .subpanelPartiInfo td{
+  border-bottom: 1px solid <?= modeCHECKIN.color ?>;
+}
+body.modeLUGGAGE .subpanelPartiInfo td{
+  border-bottom: 1px solid <?= modeLUGGAGE.color ?>;
+}
+
+.subpanelPartiInfo .tdLuggage{
+  left: 10px;
+}
+
+body.modeCHECKIN .subpanelPartiInfo .tdLuggage{
+  border: 1px solid <?= modeCHECKIN.color ?>;
+}
+
+body.modeLUGGAGE .subpanelPartiInfo .tdLuggage{
+  border: 1px solid <?= modeLUGGAGE.color ?>;
+}
+
+.subpanelPartiInfo .messageDisplay{
+  color: red;
+}
+
+.subpanelPartiInfo .checkInStatus0{
+  color: #ff0f77;
+  font-weight: bold;
+}
+.subpanelPartiInfo .checkInStatus1{
+  color: #44c113;
+  font-weight: bold;
+}
+
+
+/*********************************************************************
+  Button Search Again Styles
+*******************************************************************+*/
+.subpanelCheckIn, .subpanelLuggage{
+  position: relative;
+}
+.buttonSearchAgain{
+  position: absolute;
+  right: 0;
+}
+/*********************************************************************
+  Subpanel Luggage Styles
+*******************************************************************+*/
+.groupInputEachLuggage{
+  margin-bottom: 0.5em;
+}
+input[type=checkbox] + label {
+    display: inline-block;
+    cursor: pointer;
+    position: relative;
+    padding-left: 35px;
+    margin-left: 0px;
+    margin-right: 15px;
+    font-size: 25px;
+}
+input[type=checkbox] + label:before {
+    content: "";
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    margin-right: 10px;
+    position: absolute;
+    left: 5px;
+    bottom: 3px;
+    border: 1px solid #555555;
+    background-color: rgba(255, 255, 255, 0.5);
+}
+input[type=checkbox] {
+    display: none;
+}
+input[type=checkbox]:checked + label:before {
+    content: "\2713"; /* a tick */
+    font-size: 25px;
+    color: black;
+    text-align: center;
+    line-height: 25px;
+}
+
+</style>
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script>
+/*C+C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C
+  Class:    CHandler
+
+  Summary:  
+
+  Methods:  Constructor
+              Sets the page and register event listeners.
+            Search
+              Short description of MyMethodOne.
+            DisplayPartiInfo
+              Short description of MyMethodTwo.
+            DisplayMultiplePartiInfo
+              Short
+            CheckIn
+              Short
+            ReloadPanels
+              Reset UI elements. Call this on mode change.
+            OnFailure
+              Destructor.
+C---C---C---C---C---C---C---C---C---C---C---C---C---C---C---C---C-C*/
+var CHandler = function()
+{
+  console.log("CHandler constructor called!");
+  this.ShowOnePanel('panelSearch');
+  this.m_strCurrentMode = "CHECKIN";
+  this.ReloadPanels();
+  var that = this;
+  // Register event
+  $( "#panelSearch form" ).submit(function(event)
+  {
+    that.Search();
+    event.preventDefault();
+  });
+  $( "#panelSearch .buttonSearch" ).click(function(event)
+  {
+    that.Search();
+  });
+  $('nav #buttonCheckIn').click(function(event)
+  {
+    that.m_strCurrentMode = "CHECKIN";
+    that.ReloadPanels();
+  });
+  $('nav #buttonLuggage').click(function(event)
+  {
+    that.m_strCurrentMode = "LUGGAGE";
+    that.ReloadPanels();
+  });
+  $('#panelResult .buttonCheckIn').click(function(event)
+  {
+    that.CheckIn();
+  });
+  $('#panelResult .buttonUpdateLuggage').click(function(event)
+  {
+    that.UpdateLuggage();
+  });
+  $('#panelResult .buttonSearchAgain').click(function(event)
+  {
+    that.ReloadPanels();
+  });
+};
+
+CHandler.prototype.Search = function()
+{
+  var strfieldSearch = $.trim( $('#panelSearch .fieldSearch').val() );
+  if(!strfieldSearch.length || !/^\d+$/.test(strfieldSearch) )
+  {
+    document.getElementById("messageError").innerHTML = "登記編號或電話號碼應全為數字。";
+    this.ShowOnePanel('panelSearch');
+    return;
+  }
+  this.ShowOnePanel('panelLoading');
+  var that = this;
+  if(strfieldSearch.length == 8)
+  {
+    // User entered phone
+    google.script.run
+    .withSuccessHandler(function(a){that.DisplayMultiplePartiInfo(a);})
+    .withFailureHandler(function(a){that.OnFailure(a);})
+    .GetParticipantInfoByPhone(strfieldSearch);
+  }
+  else
+  {
+    // User entered reg num
+    google.script.run
+    .withSuccessHandler(function(a){that.DisplayPartiInfo(a);})
+    .withFailureHandler(function(a){that.OnFailure(a);})
+    .GetParticipantInfo(strfieldSearch);
+   }
+};
+
+CHandler.prototype.DisplayPartiInfo = function(jsonPartiInfo, strMessage)
+{
+  console.log("Received PartiInfo", jsonPartiInfo);
+  
+  // Display message
+  var strSubpanelElm = '.subpanelPartiInfo';
+  $(strSubpanelElm + ' .messageDisplay').html(strMessage ? strMessage : "");
+  $('.subpanelLoading').css('display', 'none');
+  
+  // Display Parti Info stored in json
+  if(jsonPartiInfo){
+  
+    $(strSubpanelElm + ' .tdRegNum').html(jsonPartiInfo.RegNum);
+    $(strSubpanelElm + ' .tdName').html(jsonPartiInfo.Name);
+    $(strSubpanelElm + ' .tdGender').html(jsonPartiInfo.Gender);
+    $(strSubpanelElm + ' .tdPhone').html(jsonPartiInfo.Phone);
+    $(strSubpanelElm + ' .tdEmail').html(jsonPartiInfo.Email);
+    $(strSubpanelElm + ' .tdUID').html(jsonPartiInfo.UID);
+    $(strSubpanelElm + ' .tdACANum').html(jsonPartiInfo.ACANum);
+    $(strSubpanelElm + ' .tdRole').html(jsonPartiInfo.Role);
+    $(strSubpanelElm + ' .tdResponseTime').html(jsonPartiInfo.ResponseTime);
+    $(strSubpanelElm + ' .tdCheckInStatus').html(jsonPartiInfo.CheckInStatus == '1'? 
+      '<span class="checkInStatus1">已登記</span>' :
+      '<span class="checkInStatus0">尚未登記</span>');
+    
+    $(strSubpanelElm + ' .tdLuggage').empty();
+    for(var i = 0; i < jsonPartiInfo.Luggages.length; i++)
+    {
+      var strLugNum = jsonPartiInfo.Luggages[i].LugNum;
+      var strLugStatus = parseInt(jsonPartiInfo.Luggages[i].Out) == 1? 'Out' : 'In';
+      $(strSubpanelElm + ' .tdLuggage').append( strLugNum + " (" + strLugStatus + ") ");
+    }
+  
+  }
+  
+  // Perform different action for different mode
+  if(this.m_strCurrentMode == "CHECKIN")
+  {
+    if(jsonPartiInfo){
+      $('.subpanelCheckIn .hiddenRegNum').val(jsonPartiInfo.RegNum);
+      $('.subpanelCheckIn .buttonCheckIn').val(jsonPartiInfo.CheckInStatus == '1'? '取消登記' : '登記');
+    }
+    $('.subpanelCheckIn').css('display', 'block');
+  }
+  else if(this.m_strCurrentMode == "LUGGAGE")
+  {
+    if(jsonPartiInfo){
+      $('.subpanelLuggage .hiddenRegNum').val(jsonPartiInfo.RegNum);
+      $('.subpanelLuggage .groupInputLuggages .groupInputEachLuggage').each(function(index){
+        if(!jsonPartiInfo.Luggages[index])
+          return;
+        var strLugNum = jsonPartiInfo.Luggages[index].LugNum;
+        var strOut = jsonPartiInfo.Luggages[index].Out;
+        $(this).children('.fieldLugNum').val(strLugNum);
+        $(this).children('.checkboxOut').prop('checked', strOut == '1');
+        
+      });
+    }
+    $('.subpanelLuggage').css('display', 'block');
+  }
+  
+  // Everything all set, display the result panel!
+  this.ShowOnePanel('panelResult');
+};
+  
+CHandler.prototype.DisplayMultiplePartiInfo = function(arrMatchRegNums)
+{
+  if(arrMatchRegNums.length == 0)
+  {
+    this.OnFailure({message: "此電話號碼並未登記。"});
+  }
+  else if(arrMatchRegNums.length == 1)
+  {
+    this.DisplayPartiInfo(arrMatchRegNums[0]);
+  }
+  else
+  {
+    this.OnFailure({message: JSON.stringify(arrMatchRegNums)});
+  }
+};
+
+CHandler.prototype.CheckIn = function()
+{
+  // Hide check-in buttons and show loading instead
+  $('.subpanelCheckIn').css('display', 'none');
+  $('.subpanelLoading').css('display', 'block');
+  $('.messageDisplay').empty();
+  
+  // Get information needed
+  var iHiddenRegNum = $('.subpanelCheckIn .hiddenRegNum').val();
+  iHiddenRegNum = parseInt(iHiddenRegNum);
+  
+  // Submit check-in request to server
+  console.log("Check-in Request", iHiddenRegNum);
+  var that = this;
+  google.script.run
+  .withSuccessHandler(function(json){ that.DisplayPartiInfo(json, json.CheckInStatus == '1'? '成功登記！' : '已取消登記！'); })
+  .withFailureHandler(function(e){ that.DisplayPartiInfo(null, e); })
+  .CheckIn(iHiddenRegNum, "Note~");
+};
+
+CHandler.prototype.UpdateLuggage = function()
+{
+  // Hide fields & buttons and show loading instead
+  $('.subpanelLuggage').css('display', 'none');
+  $('.subpanelLoading').css('display', 'block');
+  $('.messageDisplay').empty();
+  
+  // Get information needed
+  var iHiddenRegNum = $('.subpanelLuggage .hiddenRegNum').val();
+  iHiddenRegNum = parseInt(iHiddenRegNum);
+  
+  var arrLuggages = []; //will be sent to server
+  $('.subpanelLuggage .groupInputLuggages .groupInputEachLuggage').each(function(i){
+    //for each luggage, push its info to the array
+    var strLugNum = $(this).children('.fieldLugNum').val();
+    var strOut = $(this).children('.checkboxOut')[0].checked ? '1' : '0';
+    arrLuggages.push({"LugNum": strLugNum, "Out": strOut});
+  });
+  
+  // Submit update luggage request to server
+  console.log("Update Luggage Request", iHiddenRegNum, arrLuggages);
+  var that = this;
+  google.script.run
+  .withSuccessHandler(function(json){ that.DisplayPartiInfo(json, '行李資料已更新！'); })
+  .withFailureHandler(function(e){ that.DisplayPartiInfo(null, e); })
+  .UpdateLuggages(iHiddenRegNum, arrLuggages, "LuggageNote~");
+};
+
+CHandler.prototype.ReloadPanels = function()
+{
+  // Clear & reset elements
+  document.getElementById("messageError").innerHTML = "&nbsp;";
+  $('.subpanelLuggage').css('display', 'none');
+  $('.subpanelCheckIn').css('display', 'none');
+  $('.tdLuggage').empty();
+  this.ShowOnePanel('panelSearch');
+  
+  // UI update for current mode
+  if(this.m_strCurrentMode == "CHECKIN")
+  {
+    $('nav .buttonMode').removeClass('buttonModeCurrent');
+    $('nav #buttonCheckIn').addClass('buttonModeCurrent');
+    $('body').removeClass().addClass('modeCHECKIN');
+  }
+  else if(this.m_strCurrentMode == "LUGGAGE")
+  {
+    $('nav .buttonMode').removeClass('buttonModeCurrent');
+    $('nav #buttonLuggage').addClass('buttonModeCurrent');
+    $('body').removeClass().addClass('modeLUGGAGE');
+  }
+  $('#panelSearch .fieldSearch').select();
+};
+
+CHandler.prototype.ShowOnePanel = function(strPanelToShow)
+{
+  document.getElementById('panelSearch').style.display = "none";
+  document.getElementById('panelLoading').style.display = "none";
+  document.getElementById('panelResult').style.display = "none";
+  document.getElementById(strPanelToShow).style.display = "block";
+};
+
+CHandler.prototype.OnFailure = function(error)
+{
+  document.getElementById("messageError").innerHTML = "錯誤：" + error.message;
+  this.ShowOnePanel('panelSearch');
+  $('#panelSearch .fieldSearch').select();
+};
+
+$(document).ready(function()
+{
+  var handler = new CHandler();
+});
+</script>
+</head>
+
+<body>
+
+<header>
+  <h1>香港大學學生會動漫聯盟</h1>
+  <h2>Cosplay Party System 工作人員界面</h2>
+</header>
+
+<div id="app">
+
+  <nav>
+    <span id="buttonCheckIn" class="buttonMode">Check-in 登記</span><span id="buttonLuggage" class="buttonMode">Luggage 行李寄存</span>
+  </nav>
+  
+  <div id="panels">
+  
+    <div id="panelSearch">
+      <p>搜尋參加者資料： </p>
+      <form onsubmit="return false;">
+        <input type="text" class="fieldSearch" placeholder="輸入登記編號或電話號碼..." maxlength="8" autocomplete='off' autofocus />  
+        <input type="button" class="buttonSearch" value="Go!" />
+      </form>
+      <p id="messageError">&nbsp;</p>
+      <p>可以使用登記編號或電話號碼搜尋。</p>
+      <p>若想搜尋其他資料，<a href="<?= SpreadsheetApp.openById(GetGoogleSheetID_()).getUrl(); ?>" target="_blank">可打開試算表查閱</a>。</p>
+    </div>
+    
+    <div id="panelResult">
+    
+      <p id="messageMultiParti">
+        此電話號碼被登記了超過一次。請確認以下哪項資料才是正確的。<br />
+        如果資料大致相同，請登記最上面那項資料（即參加者第一次網上交表時的資料）。<br />
+        如果資料不太一樣（尤其是姓名），請和參加者核對哪項才是正確的資料。
+      </p>
+      
+      <div class="groupEachParti">
+    
+        <div class="subpanelPartiInfo">
+          <table>
+            <tr><th>登記編號</th><td class="tdRegNum"></td><th class="thLuggage">行李寄存資料</th></tr>
+            <tr><th>姓名</th><td class="tdName"></td><td class="tdLuggage" rowspan="8"></td></tr>
+            <tr><th>性別</th><td class="tdGender"></td></tr>
+            <tr><th>電話</th><td class="tdPhone"></td></tr>
+            <tr><th>電郵</th><td class="tdEmail"></td></tr>
+            <tr><th>UID</th><td class="tdUID"></td></tr>
+            <tr><th>會員編號</th><td class="tdACANum"></td></tr>
+            <tr><th>身份</th><td class="tdRole"></td></tr>
+            <tr><th>網上交表時間</th><td class="tdResponseTime"></td></tr>
+            <tr><th>狀態</th><td class="tdCheckInStatus"></td></tr>
+          </table>
+          <p class="messageDisplay"></p>
+        </div>
+        
+        <div class="subpanelLoading">
+          <img src="https://i.imgur.com/pEz3PzX.gif" /> Loading...
+        </div>
+        
+        <div class="subpanelCheckIn">
+          <input type="hidden" class="hiddenRegNum" />
+          <input type="button" class="buttonCheckIn" value="登記" />
+          <input type="button" class="buttonSearchAgain" value="重新搜尋" />
+        </div>
+        
+        <div class="subpanelLuggage">
+          <p>更改行李資料：</p>
+          <form onsubmit="return false;">
+          
+            <div class="groupInputLuggages">
+            
+              <? for (var i = 0; i < LUGGAGE_MAX; i++) { ?>
+              <div class="groupInputEachLuggage">
+                <input type="text" class="fieldLugNum" placeholder="無" autocomplete='off' />
+                <input type="checkbox" class="checkboxOut" id="L<?=i ?>" /><label for="L<?=i ?>">取走</label>
+              </div>
+              <? } ?>
+              
+            </div>
+      
+            <input type="hidden" class="hiddenRegNum" />
+            <input type="button" class="buttonUpdateLuggage" value="更新行李資料" />
+            <input type="button" class="buttonSearchAgain" value="重新搜尋" />
+          </form>
+        </div>
+      
+      </div>
+      
+    </div>
+    
+    <div id="panelLoading">
+      <img src="https://i.imgur.com/pEz3PzX.gif" /> Loading...
+    </div>
+    
+  </div>
+
+</div>
+
+<footer>
+  <p>
+    &copy;2016 香港大學學生會動漫聯盟 The Animation and Comics Association, HKUSU | 
+    <a href="<?= FormApp.openById(GetGoogleFormID_()).getPublishedUrl(); ?>" target="_blank">登記表格</a> |
+    <a href="<?= SpreadsheetApp.openById(GetGoogleSheetID_()).getUrl(); ?>" target="_blank">試算表</a>
+  </p>
+</footer>
+
+<!--<img src="https://i.imgur.com/eeCEOwR.jpg">-->
+</body>
+
+</html>
