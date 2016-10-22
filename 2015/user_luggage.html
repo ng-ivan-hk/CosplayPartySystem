@@ -1,0 +1,104 @@
+<? //----- user_luggage.html ----- ?>
+<?!= include('common') ?>
+<?!= include('nav') ?>
+
+<script>
+function checkLuggage(){
+  hideAndDisplay('page_result', 'page_loading');
+  google.script.run.withSuccessHandler(checkLuggageSuccess).withFailureHandler(onFailure).checkLuggage(document.forms['form_check']);
+
+}
+
+function setLuggage(){
+  hideAndDisplay('page_result', 'page_loading');
+  google.script.run.withSuccessHandler(setLuggageSuccess).withFailureHandler(onFailure).setLuggage(document.forms['form_set']);
+}
+
+function checkLuggageSuccess(json){
+
+  if(json.status == "success"){
+  
+    var htmltxt = '', htmlform = '';
+    
+    //For printing info about that cosplayer
+    htmltxt += '<table>';
+    htmltxt += '<tr><th>登記編號</th><td>' + json.regNumber + '</td>';
+    htmltxt += '<th>性別</th><td>' + json.gender + '</td></tr>';
+    htmltxt += '<tr><th>姓名</th><td>' + json.name + '</td>';
+    htmltxt += '<th>電話</th><td>' + json.phone + '</td></tr>';
+    htmltxt += '<tr><th>暱稱</th><td>' + json.nickname + '</td>';
+    htmltxt += '<th>身份</th><td>' + json.role + '</td></tr>';
+    htmltxt += '<tr><th>狀態</th><td>' + (json.arrived ? '<span style="color:green">已簽到</span>' : '<span style="color:red">未簽到</span>' ) + '</td>';
+    htmltxt += '<th>備註</th><td>' + json.notes + '</td></tr>';
+    htmltxt += '</table>';
+    
+    //For generating a form for changing luggage info
+    htmlform += '<form id="form_set"><fieldset><legend>行李資料</legend>';
+    
+    for(var i = 0; i < json.luggages.length; i++){
+    
+      var luggageName = 'l' + (i+1);
+      var luggageOutName = 'l' + (i+1) + 'out';
+      
+      //For generating a form for changing luggage info
+      var noLuggageHTML = json.luggages[i].out? 'class="luggageOut"' : (json.luggages[i].luggage ? '' : 'class="luggageNone" placeholder="無"');
+      htmlform += '行李'  + (i+1) + '：<input name="' + luggageName + '" type="text" value="' + json.luggages[i].luggage + '" ' + noLuggageHTML + '/>';
+      if(json.luggages[i].luggage){
+        var checked = json.luggages[i].out ? 'checked' : '';
+        htmlform += '<input type="checkbox" id="' + luggageOutName +  '" name="' +  luggageOutName + '" ' + checked + ' /><label for="' + luggageOutName +'">取走</label>';
+      }
+      
+      if(i<json.luggages.length-1) htmlform += '<br>';
+      
+    }
+    
+    htmlform += '<br><input type="hidden" id="regNumber" name="regNumber" value="' + json.regNumber + '" />';
+    htmlform += '<input onclick="setLuggage()" type="button" value="更改" />';
+    htmlform += '</fieldset></form>';
+
+    document.getElementById("page_result").innerHTML = htmltxt + htmlform;
+    
+  } else if (json.status == "error"){
+    document.getElementById("page_result").innerHTML = "錯誤：" + json.message;
+  }
+  
+  hideAndDisplay('page_loading', 'page_result');
+  
+}
+
+function setLuggageSuccess(json){
+  checkLuggageSuccess(json);
+}
+
+function onFailure(error){
+  document.getElementById("page_result").innerHTML = "Error from Failure Handler: " + error.message;
+  hideAndDisplay('page_loading', 'page_result');
+}
+
+document.body.id = 'luggage';
+</script>
+
+<div id="user_luggage" class="user">
+
+  <div id="header">
+    <b>2015 CP 行李寄存測試</b>
+  </div>
+  
+  <div id="page_form">
+    <form id="form_check" onsubmit="checkLuggage();return false;">
+    
+    登記編號或電話：
+    <input type="text" id="regNumber" name="regNumber" placeholder="例：1 或 R0001" maxlength="8" autocomplete='off' autofocus />  
+    <input onclick="checkLuggage()" type="button" value="搜尋" />
+    </form>
+  </div>
+  
+  <div id="page_loading" style="display:none">
+  Loading...
+  </div>
+  
+  <div id="page_result" style="display:none">
+  Result
+  </div>
+
+</div>
