@@ -1,0 +1,17 @@
+<? //----- nav.html ----- ?>
+<? var url = ScriptApp.getService().getUrl(); ?>
+
+<nav>
+
+  <a id="checkin"   href="<?!= url ?>?a=checkin"   target="_top">Check-in</a>
+  <a id="walkin"    href="<?!= url ?>?a=walkin"    target="_top">Walk-in</a>
+  <a id="luggage"   href="<?!= url ?>?a=luggage"   target="_top">行李寄存</a>
+  
+  <a href="https://docs.google.com/spreadsheets/d/<?!= SPREADSHEET_KEY ?>/edit" target="_blank">查看試算表</a>
+  <a href="<?!= url ?>" target="_blank">Cosplayer網上登記表格</a>
+
+</nav>
+
+<script>
+  document.body.style.background = '#EAD5FF';
+</script>
