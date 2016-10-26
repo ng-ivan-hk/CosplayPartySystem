@@ -7,10 +7,10 @@
   
   Created:   17 Oct 2016
   
-  Updated:   21 Oct 2016
+  Updated:   26 Oct 2016
   
-  Summary:   Client-side implementation of the System, intended to 
-             be used by Cosplay Party helpers/staff.
+  Summary:   Client-side implementation of the System, which is a Web
+             UI intended to be used by Cosplay Party helpers/staff.
   
 ----------------------------------------------------------------------
   This program and any source codes of it may not be reproduced or 
@@ -23,7 +23,6 @@
 
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta data-name="app_version" content="<?= APP_VERSION ?>" />
 <? 
 var modeCHECKIN = 
@@ -361,7 +360,7 @@ var CHandler = function()
   / When Update Luggage Button is clicked
   --------------------------------------------------------------------*/
   $('#panelResult .buttonUpdateLuggage').click(function(event)
-  {
+  {    
     // Find which groupEachParti element does this button belongs to
     var iElemIndex = $( "#panelResult .groupEachParti .buttonUpdateLuggage" ).index(this);
     
@@ -404,7 +403,7 @@ var CHandler = function()
 CHandler.prototype.Search = function()
 {
   var strfieldSearch = $.trim( $('#panelSearch .fieldSearch').val() );
-  if(!strfieldSearch.length || !/^\d+$/.test(strfieldSearch) )
+  if(!strfieldSearch.length || !(/^\d+$/).test(strfieldSearch) )
   {
     document.getElementById("messageError").innerHTML = "登記編號或電話號碼應全為數字。";
     this.ShowOnePanel('panelSearch');
@@ -430,9 +429,14 @@ CHandler.prototype.Search = function()
    }
 };
 
-CHandler.prototype.DisplayPartiInfo = function(jsonPartiInfo, strMessage, iElemIndex = 0)
+CHandler.prototype.DisplayPartiInfo = function(jsonPartiInfo, strMessage, iElemIndex)
 {
   console.log("Received PartiInfo", jsonPartiInfo);
+  
+  if(!iElemIndex)
+    iElemIndex = 0;
+  
+  console.log(iElemIndex);
   
   // Display message
   var jGroupEachParti = $('#panelResult .groupEachParti').eq(iElemIndex);
@@ -511,7 +515,7 @@ CHandler.prototype.DisplayMultiplePartiInfo = function(arrPartiInfoMatches)
     var jGroupEachParti = $('#panelResult .groupEachParti');
     for(var i = 1; i < arrPartiInfoMatches.length; i++)
     {
-      var jNewClone = jGroupEachParti.clone(true, true).insertAfter(jGroupEachParti);
+      var jNewClone = jGroupEachParti.clone(true, true).appendTo(jGroupEachParti.parent());
       
       //make every pair of input[type=checkbox] & label unique
       
@@ -580,7 +584,7 @@ $(document).ready(function()
 
 <header>
   <h1>香港大學學生會動漫聯盟</h1>
-  <h2>Cosplay Party System 工作人員界面</h2>
+  <h2>Cosplay Party System 工作人員界面 (測試版)</h2>
 </header>
 
 <div id="app">
@@ -599,7 +603,7 @@ $(document).ready(function()
       </form>
       <p id="messageError">&nbsp;</p>
       <p>可以使用登記編號或電話號碼搜尋。</p>
-      <p>若想搜尋其他資料，<a href="<?= SpreadsheetApp.openById(GetGoogleSheetID_()).getUrl(); ?>" target="_blank">可打開試算表查閱</a>。</p>
+      <p>若想搜尋其他資料，<a href="<?= GetGoogleSheet_().getUrl(); ?>" target="_blank">可打開試算表查閱</a>。</p>
     </div>
     
     <div id="panelResult">
@@ -675,12 +679,11 @@ $(document).ready(function()
 <footer>
   <p>
     &copy;2016 香港大學學生會動漫聯盟 The Animation and Comics Association, HKUSU | 
-    <a href="<?= FormApp.openById(GetGoogleFormID_()).getPublishedUrl(); ?>" target="_blank">登記表格</a> |
-    <a href="<?= SpreadsheetApp.openById(GetGoogleSheetID_()).getUrl(); ?>" target="_blank">試算表</a>
+    <a href="<?= GetGoogleForm_().getPublishedUrl(); ?>" target="_blank">登記表格</a> |
+    <a href="<?= GetGoogleSheet_().getUrl(); ?>" target="_blank">試算表</a>
   </p>
 </footer>
 
-<!--<img src="https://i.imgur.com/eeCEOwR.jpg">-->
 </body>
 
 </html>
