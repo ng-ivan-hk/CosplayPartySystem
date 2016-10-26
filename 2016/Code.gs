@@ -1,8 +1,13 @@
 // Settings
+
+var GOOGLE_FORM_ID = '1DeXFAEeVK1eosPvK4ynB5P9e_-hO4NAOBjgtAqjq1Bs';
+var GOOGLE_SHEET_ID = '1eclh392VjYsIC8HaxQg8kTl_lcA4FBRI9bEamll2kbw';
+
 var COLUMN_CHECK_IN_STATUS = 9;
 var COLUMN_NOTE            = 10;
 var COLUMN_LUGGAGE         = 11;
 var LUGGAGE_MAX            = 3;
+
 var COLOR_LUGGAGE_OUT      = '#00ffff';
 var COLOR_DEFAULT          = '#ffffff';
 var APP_VERSION            = '1.0.0.0';
@@ -15,7 +20,7 @@ var APP_VERSION            = '1.0.0.0';
   
   Created:   17 Oct 2016
   
-  Updated:   22 Oct 2016
+  Updated:   26 Oct 2016
   
   Summary:   Server-side implementation of the System.
   
@@ -27,8 +32,7 @@ var APP_VERSION            = '1.0.0.0';
   
   TODO:
   
-  Send email on form submit
-  install?
+  use cache to improve performance?
   set all cells to plain text
   log
 
@@ -39,7 +43,10 @@ var APP_VERSION            = '1.0.0.0';
 ===================================================================+*/
 
 function doGet(request) {
-  return HtmlService.createTemplateFromFile('index').evaluate();
+  return HtmlService.createTemplateFromFile('index').evaluate()
+         .setTitle('Cosplay Party System 工作人員界面 - 香港大學學生會動漫聯盟')
+         .setFaviconUrl('http://www.acabox.hkusu.hku.hk/images/favicon-200x200.png')
+         .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
 function GetParticipantInfoByPhone(strPhone)
@@ -50,7 +57,7 @@ function GetParticipantInfoByPhone(strPhone)
   /*--------------------------------------------------------------------
   / Search in form responses
   --------------------------------------------------------------------*/
-  var formResponses = FormApp.openById(GetGoogleFormID_()).getResponses();
+  var formResponses = GetGoogleForm_().getResponses();
   for(var i = 0; i < formResponses.length; i++)
   {
     var itemResponses = formResponses[i].getItemResponses();
@@ -75,7 +82,7 @@ function GetParticipantInfo(iRegNum)
   /*--------------------------------------------------------------------
   / Get basic info from form responses
   --------------------------------------------------------------------*/
-  var formResponses = FormApp.openById(GetGoogleFormID_()).getResponses();
+  var formResponses = GetGoogleForm_().getResponses();
   if(iRegNum < 1 || iRegNum > formResponses.length)
   {
     throw "無法找到登記編號。";
@@ -93,7 +100,7 @@ function GetParticipantInfo(iRegNum)
   var bCheckInStatus;
   
   var iCellRowNum = iRegNum + 1;
-  var sheet = SpreadsheetApp.openById(GetGoogleSheetID_()).getSheets()[0];
+  var sheet = GetGoogleSheet_().getSheets()[0];
   var rangeCheckInStatus = sheet.getRange(iCellRowNum, COLUMN_CHECK_IN_STATUS);
   if(rangeCheckInStatus.getValue() == '1')
   {
@@ -154,7 +161,7 @@ function CheckIn(iRegNum, strNote)
   --------------------------------------------------------------------*/
   var bNewCheckinStatus;
   
-  var sheet = SpreadsheetApp.openById(GetGoogleSheetID_()).getSheets()[0];
+  var sheet = GetGoogleSheet_().getSheets()[0];
   var iCellRowNum = iRegNum + 1;
   if(iRegNum < 1 || iCellRowNum > sheet.getLastRow())
   {
@@ -203,7 +210,7 @@ function UpdateLuggages(iRegNum, arrLuggages, strNote)
   / Get check-in status
   --------------------------------------------------------------------*/ 
   var iCellRowNum = iRegNum + 1;
-  var sheet = SpreadsheetApp.openById(GetGoogleSheetID_()).getSheets()[0];
+  var sheet = GetGoogleSheet_().getSheets()[0];
   var rangeCheckInStatus = sheet.getRange(iCellRowNum, COLUMN_CHECK_IN_STATUS);
   if(rangeCheckInStatus.getValue() != '1')
   {
@@ -215,9 +222,14 @@ function UpdateLuggages(iRegNum, arrLuggages, strNote)
   --------------------------------------------------------------------*/
   for(var i = 0; i < arrLuggages.length; i++)
   {
+    var strLugNum = arrLuggages[i].LugNum;
+    if(strLugNum.charAt(0) == '=')
+      strLugNum = "'" + strLugNum; //escape equal sign
+  
     var rangeLugNum = sheet.getRange(iCellRowNum, COLUMN_LUGGAGE + i);
-    rangeLugNum.setValue(arrLuggages[i].LugNum);
+    rangeLugNum.setValue(strLugNum).setNumberFormat('@STRING@');
     
+    // Set cell color
     if(arrLuggages[i].Out == '1')
     {
       rangeLugNum.setBackground(COLOR_LUGGAGE_OUT);
@@ -244,7 +256,7 @@ function PrintAllResponsesFromForm() {
   var strResponses = "";
   
   // Open a form by ID and log the responses to each question.
-  var form = FormApp.openById(GetGoogleFormID_());
+  var form = GetGoogleForm_();
   var formResponses = form.getResponses();
   for (var i = 0; i < formResponses.length; i++) {
     var formResponse = formResponses[i];
@@ -284,15 +296,27 @@ function Test()
 /*####################################################################
 # Private functions
 ####################################################################*/
+var googleFormObj  = null;
+var googleSheetObj = null;
 
-function GetGoogleFormID_()
+function GetGoogleForm_()
 {
-  //TODO: use property
-  return '1DeXFAEeVK1eosPvK4ynB5P9e_-hO4NAOBjgtAqjq1Bs';
+  if(googleFormObj)
+    return googleFormObj;
+  else
+  {
+    googleFormObj = FormApp.openById(GOOGLE_FORM_ID);
+    return googleFormObj;
+  }
 }
 
-function GetGoogleSheetID_()
+function GetGoogleSheet_()
 {
-  //TODO: use property
-  return '1eclh392VjYsIC8HaxQg8kTl_lcA4FBRI9bEamll2kbw';
+  if(googleSheetObj)
+    return googleSheetObj;
+  else
+  {
+    googleSheetObj = SpreadsheetApp.openById(GOOGLE_SHEET_ID);
+    return googleSheetObj;
+  }
 }
