@@ -1,16 +1,25 @@
-// Settings
+// Settings (column starts from 0)
 
-var GOOGLE_FORM_ID = '1DeXFAEeVK1eosPvK4ynB5P9e_-hO4NAOBjgtAqjq1Bs';
+var GOOGLE_FORM_ID  = '1DeXFAEeVK1eosPvK4ynB5P9e_-hO4NAOBjgtAqjq1Bs';
 var GOOGLE_SHEET_ID = '1eclh392VjYsIC8HaxQg8kTl_lcA4FBRI9bEamll2kbw';
 
-var COLUMN_CHECK_IN_STATUS = 9;
-var COLUMN_NOTE            = 10;
-var COLUMN_LUGGAGE         = 11;
+var COLUMN_RESPONSE_TIME   = 0;
+var COLUMN_NAME            = 1;
+var COLUMN_GENDER          = 2;
+var COLUMN_PHONE           = 3;
+var COLUMN_EMAIL           = 4;
+var COLUMN_UID             = 5;
+var COLUMN_ACA_NUM         = 6;
+var COLUMN_ROLE            = 7;
+var COLUMN_CHECK_IN_STATUS = 8;
+var COLUMN_NOTE            = 9;
+var COLUMN_LUGGAGE         = 10;
+
 var LUGGAGE_MAX            = 3;
 
 var COLOR_LUGGAGE_OUT      = '#00ffff';
 var COLOR_DEFAULT          = '#ffffff';
-var APP_VERSION            = '1.0.0.0';
+var APP_VERSION            = '1.0.0.1';
 
 /*+===================================================================
   File:      Code.gs
@@ -20,7 +29,7 @@ var APP_VERSION            = '1.0.0.0';
   
   Created:   17 Oct 2016
   
-  Updated:   26 Oct 2016
+  Updated:   1 Nov 2016
   
   Summary:   Server-side implementation of the System.
   
@@ -28,12 +37,12 @@ var APP_VERSION            = '1.0.0.0';
   ----------------------------------------------------------------------
   Version    Date           Author      Description
   ----------------------------------------------------------------------
-  1.0.0.0    ?? Oct 2016    Ivan Ng     Initial
+  1.0.0.1    ?? Nov 2016    Ivan Ng     Initial
   
   TODO:
   
   use cache to improve performance?
-  set all cells to plain text
+  luggage icon
   log
 
 ----------------------------------------------------------------------
@@ -46,7 +55,7 @@ function doGet(request) {
   return HtmlService.createTemplateFromFile('index').evaluate()
          .setTitle('Cosplay Party System 工作人員界面 - 香港大學學生會動漫聯盟')
          .setFaviconUrl('http://www.acabox.hkusu.hku.hk/images/favicon-200x200.png')
-         .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+         .addMetaTag('viewport', 'width=device-width, initial-scale=0.5');
 }
 
 function GetParticipantInfoByPhone(strPhone)
@@ -54,15 +63,15 @@ function GetParticipantInfoByPhone(strPhone)
   // Concat these 2 arrays later since we need to make check-in matches appears first!
   var arrMatchesCheckedIn = [];
   var arrMatchesNotCheckedIn = [];
+  
   /*--------------------------------------------------------------------
-  / Search in form responses
+  / Search through all phones in sheet
   --------------------------------------------------------------------*/
-  var formResponses = GetGoogleForm_().getResponses();
-  for(var i = 0; i < formResponses.length; i++)
+  var sheet = GetGoogleSheet_().getSheets()[0];
+  var arr2dPhones = sheet.getRange(2, COLUMN_PHONE + 1, sheet.getLastRow() - 1, 1).getValues();
+  for(var i = 0; i < arr2dPhones.length; i++)
   {
-    var itemResponses = formResponses[i].getItemResponses();
-    Logger.log("[%s] [%s]", itemResponses[2].getResponse(), strPhone);
-    if(itemResponses[2].getResponse() == strPhone)
+    if(arr2dPhones[i][0] == strPhone)
     {
       var jsonPartiInfo = GetParticipantInfo(i+1);
       if(jsonPartiInfo.CheckInStatus == '1')
@@ -80,72 +89,48 @@ function GetParticipantInfo(iRegNum)
   iRegNum = parseInt(iRegNum); //make sure it's an integer
   
   /*--------------------------------------------------------------------
-  / Get basic info from form responses
+  / Prepare values from row (that stores this parti's data)
   --------------------------------------------------------------------*/
-  var formResponses = GetGoogleForm_().getResponses();
-  if(iRegNum < 1 || iRegNum > formResponses.length)
+  var sheet = GetGoogleSheet_().getSheets()[0];
+  var iCellRowNum = iRegNum + 1;
+  if(iRegNum < 1 || iCellRowNum > sheet.getLastRow())
   {
     throw "無法找到登記編號。";
   }
-  
-  var itemResponses = formResponses[iRegNum - 1].getItemResponses();
-  var dateResponseTime = formResponses[iRegNum - 1].getTimestamp();
-  var strResponseTime = 
-    dateResponseTime ? 
-    dateResponseTime.toLocaleDateString() + dateResponseTime.toLocaleTimeString() : '---';
-  
-  /*--------------------------------------------------------------------
-  / Get check-in status from sheet
-  --------------------------------------------------------------------*/
-  var bCheckInStatus;
-  
-  var iCellRowNum = iRegNum + 1;
-  var sheet = GetGoogleSheet_().getSheets()[0];
-  var rangeCheckInStatus = sheet.getRange(iCellRowNum, COLUMN_CHECK_IN_STATUS);
-  if(rangeCheckInStatus.getValue() == '1')
-  {
-    bCheckInStatus = 1;
-  }
-  else
-  {
-    bCheckInStatus = 0;
-  }
-  
-  /*--------------------------------------------------------------------
-  / Get note from sheet
-  --------------------------------------------------------------------*/
-  var strNote = sheet.getRange(iCellRowNum, COLUMN_NOTE).getValue();
+  var arrValues = sheet.getRange(iCellRowNum, 1, 1, COLUMN_LUGGAGE + LUGGAGE_MAX).getValues()[0];
 
   /*--------------------------------------------------------------------
-  / Get luggage info from sheet
+  / Push luggage info to an array
   --------------------------------------------------------------------*/
   var arrLuggages = [];
+  var arrStrBackgrounds = sheet.getRange(iCellRowNum, COLUMN_LUGGAGE + 1, 1, LUGGAGE_MAX).getBackgrounds()[0];
   
   for(var i = 0; i < LUGGAGE_MAX; i++)
   {
-    var rangeLugNum = sheet.getRange(iCellRowNum, COLUMN_LUGGAGE + i);
-    var strLugNum = rangeLugNum.getValue();
-    var bOut = rangeLugNum.getBackground() == COLOR_LUGGAGE_OUT ? 1: 0;
+    var strLugNum = arrValues[COLUMN_LUGGAGE + i];
+    var bOut = arrStrBackgrounds[i] == COLOR_LUGGAGE_OUT ? 1: 0;
     arrLuggages.push( { "LugNum" : strLugNum , "Out" : bOut } );
   }
 
   /*--------------------------------------------------------------------
-  / Group information into JSON
+  / Get basic info from sheet and group information into JSON
   --------------------------------------------------------------------*/
+  var dateResponseTime = arrValues[COLUMN_RESPONSE_TIME];
+  
   var jsonPartiInfo = 
       {
         "Status"        : "OK",
         "RegNum"        : iRegNum,
-        "Name"          : itemResponses[0].getResponse(),
-        "Gender"        : itemResponses[1].getResponse(),
-        "Phone"         : itemResponses[2].getResponse(),
-        "Email"         : itemResponses[3].getResponse(),
-        "UID"           : itemResponses[4].getResponse(),
-        "ACANum"        : itemResponses[5].getResponse(),
-        "Role"          : itemResponses[6].getResponse(),
-        "ResponseTime"  : strResponseTime,
-        "CheckInStatus" : bCheckInStatus,
-        "Note"          : strNote,
+        "Name"          : arrValues[COLUMN_NAME],
+        "Gender"        : arrValues[COLUMN_GENDER],
+        "Phone"         : arrValues[COLUMN_PHONE],
+        "Email"         : arrValues[COLUMN_EMAIL],
+        "UID"           : arrValues[COLUMN_UID],
+        "ACANum"        : arrValues[COLUMN_ACA_NUM],
+        "Role"          : arrValues[COLUMN_ROLE],
+        "ResponseTime"  : dateResponseTime.toLocaleDateString() + dateResponseTime.toLocaleTimeString(),
+        "CheckInStatus" : arrValues[COLUMN_CHECK_IN_STATUS] == '1'? 1 : 0,
+        "Note"          : arrValues[COLUMN_NOTE],
         "Luggages"      : arrLuggages
       };
   
@@ -167,7 +152,7 @@ function CheckIn(iRegNum, strNote)
   {
     throw "無法找到登記編號。";
   }
-  var rangeCheckInStatus = sheet.getRange(iCellRowNum, COLUMN_CHECK_IN_STATUS);
+  var rangeCheckInStatus = sheet.getRange(iCellRowNum, COLUMN_CHECK_IN_STATUS + 1);
   if(rangeCheckInStatus.getValue() == '1')
   {
     bNewCheckinStatus = 0;
@@ -185,7 +170,7 @@ function CheckIn(iRegNum, strNote)
   /*--------------------------------------------------------------------
   / Update note
   --------------------------------------------------------------------*/
-  var rangeNote = sheet.getRange(iCellRowNum, COLUMN_NOTE);
+  var rangeNote = sheet.getRange(iCellRowNum, COLUMN_NOTE + 1);
   rangeNote.setValue(strNote);
   
   SpreadsheetApp.flush();
@@ -211,7 +196,7 @@ function UpdateLuggages(iRegNum, arrLuggages, strNote)
   --------------------------------------------------------------------*/ 
   var iCellRowNum = iRegNum + 1;
   var sheet = GetGoogleSheet_().getSheets()[0];
-  var rangeCheckInStatus = sheet.getRange(iCellRowNum, COLUMN_CHECK_IN_STATUS);
+  var rangeCheckInStatus = sheet.getRange(iCellRowNum, COLUMN_CHECK_IN_STATUS + 1);
   if(rangeCheckInStatus.getValue() != '1')
   {
     throw "這位參加者尚未登記。請先前往登記室登記。"
@@ -219,78 +204,33 @@ function UpdateLuggages(iRegNum, arrLuggages, strNote)
   
   /*--------------------------------------------------------------------
   / Update luggage info
-  --------------------------------------------------------------------*/
+  --------------------------------------------------------------------*/  
+  var objArrData = { Values: [], NumberFormats: [], Backgrounds: [] };
   for(var i = 0; i < arrLuggages.length; i++)
   {
     var strLugNum = arrLuggages[i].LugNum;
     if(strLugNum.charAt(0) == '=')
       strLugNum = "'" + strLugNum; //escape equal sign
-  
-    var rangeLugNum = sheet.getRange(iCellRowNum, COLUMN_LUGGAGE + i);
-    rangeLugNum.setValue(strLugNum).setNumberFormat('@STRING@');
-    
-    // Set cell color
-    if(arrLuggages[i].Out == '1')
-    {
-      rangeLugNum.setBackground(COLOR_LUGGAGE_OUT);
-    }
-    else if (arrLuggages[i].Out == '0')
-    {
-      rangeLugNum.setBackground(COLOR_DEFAULT);
-    }
+      
+    objArrData.Values.push(strLugNum);
+    objArrData.NumberFormats.push('@STRING@');
+    objArrData.Backgrounds.push(arrLuggages[i].Out == '1' ? COLOR_LUGGAGE_OUT : COLOR_DEFAULT);
   }
+  
+  var rangeLuggages = sheet.getRange(iCellRowNum, COLUMN_LUGGAGE + 1, 1, LUGGAGE_MAX)
+  rangeLuggages.setValues([objArrData.Values]);
+  rangeLuggages.setNumberFormats([objArrData.NumberFormats]);
+  rangeLuggages.setBackgrounds([objArrData.Backgrounds]);
   
   /*--------------------------------------------------------------------
   / Update note
   --------------------------------------------------------------------*/
-  var rangeNote = sheet.getRange(iCellRowNum, COLUMN_NOTE);
+  var rangeNote = sheet.getRange(iCellRowNum, COLUMN_NOTE + 1);
   rangeNote.setValue(strNote);
   
   SpreadsheetApp.flush();
   
   return GetParticipantInfo(iRegNum); //return updated info
-}
-
-function PrintAllResponsesFromForm() {
-  
-  var strResponses = "";
-  
-  // Open a form by ID and log the responses to each question.
-  var form = GetGoogleForm_();
-  var formResponses = form.getResponses();
-  for (var i = 0; i < formResponses.length; i++) {
-    var formResponse = formResponses[i];
-    var itemResponses = formResponse.getItemResponses();
-    for (var j = 0; j < itemResponses.length; j++) {
-      var itemResponse = itemResponses[j];
-      Logger.log('Response #%s to the question "%s" was "%s"',
-                 (i + 1).toString(),
-                 itemResponse.getItem().getTitle(),
-                 itemResponse.getResponse());
-      
-      strResponses += Utilities.formatString('Response #%s to the question "%s" was "%s" <br>', 
-                                             (i + 1).toString(),
-                                             itemResponse.getItem().getTitle(),
-                                             itemResponse.getResponse());
-    }
-  }
-  
-  return strResponses;
-}
-
-function Test()
-{
-  var arrLug = 
-      [
-        {"LugNum" : "A5", "Out" : "1"},
-        {"LugNum" : "A6", "Out" : "0"},
-        {"LugNum" : "A4", "Out" : "1"}
-      ];
-  CheckIn(2, "Hey");
-  var j = UpdateLuggages(2, arrLug, "Test");
-        
-  return JSON.stringify(j);
-  
 }
 
 /*####################################################################
