@@ -7,7 +7,7 @@
   
   Created:   17 Oct 2016
   
-  Updated:   26 Oct 2016
+  Updated:   1 Nov 2016
   
   Summary:   Client-side implementation of the System, which is a Web
              UI intended to be used by Cosplay Party helpers/staff.
@@ -27,11 +27,11 @@
 <? 
 var modeCHECKIN = 
 {
-  color: '#ae2f32' //default: #ae2f32
+  color: '#ad3c46'
 };
 var modeLUGGAGE =
 {
-  color: '#223988' //default: #223988
+  color: '#5e2f82'
 };
 ?>
 <style>
@@ -40,9 +40,14 @@ var modeLUGGAGE =
 *******************************************************************+*/
 body{
   font-family: "Microsoft JhengHei", Tahoma, Verdana, Arial, sans-serif;
-  font-size:  16px;
+  font-size:  24px;
   background-color: #000000;
   margin: 2em;
+  background-image: url(https://i.imgur.com/AIIJ9YM.png);
+  background-repeat: no-repeat;
+  background-position: right top;
+  background-size: 450px 387px;
+  background-attachment: fixed;
 }
 body.modeCHECKIN{
   background-color: <?= modeCHECKIN.color ?>;
@@ -584,7 +589,7 @@ $(document).ready(function()
 
 <header>
   <h1>香港大學學生會動漫聯盟</h1>
-  <h2>Cosplay Party System 工作人員界面 (測試版)</h2>
+  <h2>Cosplay Party System 2016 工作人員界面 (測試版)</h2>
 </header>
 
 <div id="app">
@@ -678,6 +683,7 @@ $(document).ready(function()
 
 <footer>
   <p>
+    在此感謝各位工作人員的幫忙。<br /><br />
     &copy;2016 香港大學學生會動漫聯盟 The Animation and Comics Association, HKUSU | 
     <a href="<?= GetGoogleForm_().getPublishedUrl(); ?>" target="_blank">登記表格</a> |
     <a href="<?= GetGoogleSheet_().getUrl(); ?>" target="_blank">試算表</a>
