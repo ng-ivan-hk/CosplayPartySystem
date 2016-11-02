@@ -1,4 +1,4 @@
-// Settings (column starts from 0)
+// Settings (column & sheet starts from 0)
 
 var GOOGLE_FORM_ID  = '1DeXFAEeVK1eosPvK4ynB5P9e_-hO4NAOBjgtAqjq1Bs';
 var GOOGLE_SHEET_ID = '1eclh392VjYsIC8HaxQg8kTl_lcA4FBRI9bEamll2kbw';
@@ -17,6 +17,9 @@ var COLUMN_LUGGAGE         = 10;
 
 var LUGGAGE_MAX            = 3;
 
+var SHEET_RESPONSE         = 0;
+var SHEET_LOG              = 1;
+
 var COLOR_LUGGAGE_OUT      = '#00ffff';
 var COLOR_DEFAULT          = '#ffffff';
 var APP_VERSION            = '1.0.0.1';
@@ -29,7 +32,7 @@ var APP_VERSION            = '1.0.0.1';
   
   Created:   17 Oct 2016
   
-  Updated:   1 Nov 2016
+  Updated:   2 Nov 2016
   
   Summary:   Server-side implementation of the System.
   
@@ -37,13 +40,7 @@ var APP_VERSION            = '1.0.0.1';
   ----------------------------------------------------------------------
   Version    Date           Author      Description
   ----------------------------------------------------------------------
-  1.0.0.1    ?? Nov 2016    Ivan Ng     Initial
-  
-  TODO:
-  
-  use cache to improve performance?
-  luggage icon
-  log
+  1.0.0.1    4 Nov 2016     Ivan Ng     Initial
 
 ----------------------------------------------------------------------
   This program and any source codes of it may not be reproduced or 
@@ -67,7 +64,7 @@ function GetParticipantInfoByPhone(strPhone)
   /*--------------------------------------------------------------------
   / Search through all phones in sheet
   --------------------------------------------------------------------*/
-  var sheet = GetGoogleSheet_().getSheets()[0];
+  var sheet = GetGoogleSheet_().getSheets()[SHEET_RESPONSE];
   var arr2dPhones = sheet.getRange(2, COLUMN_PHONE + 1, sheet.getLastRow() - 1, 1).getValues();
   for(var i = 0; i < arr2dPhones.length; i++)
   {
@@ -91,7 +88,7 @@ function GetParticipantInfo(iRegNum)
   /*--------------------------------------------------------------------
   / Prepare values from row (that stores this parti's data)
   --------------------------------------------------------------------*/
-  var sheet = GetGoogleSheet_().getSheets()[0];
+  var sheet = GetGoogleSheet_().getSheets()[SHEET_RESPONSE];
   var iCellRowNum = iRegNum + 1;
   if(iRegNum < 1 || iCellRowNum > sheet.getLastRow())
   {
@@ -138,7 +135,7 @@ function GetParticipantInfo(iRegNum)
   
 }
 
-function CheckIn(iRegNum, strNote)
+function CheckIn(iRegNum)
 {
   iRegNum = parseInt(iRegNum); //make sure it's an integer
   /*--------------------------------------------------------------------
@@ -146,7 +143,7 @@ function CheckIn(iRegNum, strNote)
   --------------------------------------------------------------------*/
   var bNewCheckinStatus;
   
-  var sheet = GetGoogleSheet_().getSheets()[0];
+  var sheet = GetGoogleSheet_().getSheets()[SHEET_RESPONSE];
   var iCellRowNum = iRegNum + 1;
   if(iRegNum < 1 || iCellRowNum > sheet.getLastRow())
   {
@@ -166,20 +163,14 @@ function CheckIn(iRegNum, strNote)
   / Update check-in status to sheet
   --------------------------------------------------------------------*/
   rangeCheckInStatus.setValue(bNewCheckinStatus);
-  
-  /*--------------------------------------------------------------------
-  / Update note
-  --------------------------------------------------------------------*/
-  var rangeNote = sheet.getRange(iCellRowNum, COLUMN_NOTE + 1);
-  rangeNote.setValue(strNote);
-  
   SpreadsheetApp.flush();
+  WriteLog_("Reg Num " + iRegNum  + (bNewCheckinStatus ? " checked-in" : " cancelled check-in"));
   
   return GetParticipantInfo(iRegNum); //return updated info
   
 }
 
-function UpdateLuggages(iRegNum, arrLuggages, strNote)
+function UpdateLuggages(iRegNum, arrLuggages)
 {
   Logger.log(iRegNum + "/" + arrLuggages);
   iRegNum = parseInt(iRegNum); //make sure it's an integer
@@ -195,7 +186,7 @@ function UpdateLuggages(iRegNum, arrLuggages, strNote)
   / Get check-in status
   --------------------------------------------------------------------*/ 
   var iCellRowNum = iRegNum + 1;
-  var sheet = GetGoogleSheet_().getSheets()[0];
+  var sheet = GetGoogleSheet_().getSheets()[SHEET_RESPONSE];
   var rangeCheckInStatus = sheet.getRange(iCellRowNum, COLUMN_CHECK_IN_STATUS + 1);
   if(rangeCheckInStatus.getValue() != '1')
   {
@@ -221,14 +212,10 @@ function UpdateLuggages(iRegNum, arrLuggages, strNote)
   rangeLuggages.setValues([objArrData.Values]);
   rangeLuggages.setNumberFormats([objArrData.NumberFormats]);
   rangeLuggages.setBackgrounds([objArrData.Backgrounds]);
-  
-  /*--------------------------------------------------------------------
-  / Update note
-  --------------------------------------------------------------------*/
-  var rangeNote = sheet.getRange(iCellRowNum, COLUMN_NOTE + 1);
-  rangeNote.setValue(strNote);
+
   
   SpreadsheetApp.flush();
+  WriteLog_("Reg Num " + iRegNum  + " updated luggages: " + JSON.stringify(arrLuggages));
   
   return GetParticipantInfo(iRegNum); //return updated info
 }
@@ -259,4 +246,9 @@ function GetGoogleSheet_()
     googleSheetObj = SpreadsheetApp.openById(GOOGLE_SHEET_ID);
     return googleSheetObj;
   }
+}
+
+function WriteLog_(strLog)
+{
+  GetGoogleSheet_().getSheets()[SHEET_LOG].appendRow([new Date(), strLog]);
 }
