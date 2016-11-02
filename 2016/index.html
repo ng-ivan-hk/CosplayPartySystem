@@ -7,7 +7,7 @@
   
   Created:   17 Oct 2016
   
-  Updated:   1 Nov 2016
+  Updated:   2 Nov 2016
   
   Summary:   Client-side implementation of the System, which is a Web
              UI intended to be used by Cosplay Party helpers/staff.
@@ -47,7 +47,6 @@ body{
   background-repeat: no-repeat;
   background-position: right top;
   background-size: 450px 387px;
-  background-attachment: fixed;
 }
 body.modeCHECKIN{
   background-color: <?= modeCHECKIN.color ?>;
@@ -60,6 +59,20 @@ body.modeLUGGAGE{
 *******************************************************************+*/
 header{
   color: #ffffff;
+}
+body.modeCHECKIN header{
+  text-shadow: 
+    -1px 0    <?= modeCHECKIN.color ?>, 
+    0    1px  <?= modeCHECKIN.color ?>, 
+    1px  0    <?= modeCHECKIN.color ?>, 
+    0    -1px <?= modeCHECKIN.color ?>;
+}
+body.modeLUGGAGE header{
+  text-shadow: 
+    -1px 0    <?= modeLUGGAGE.color ?>, 
+    0    1px  <?= modeLUGGAGE.color ?>, 
+    1px  0    <?= modeLUGGAGE.color ?>, 
+    0    -1px <?= modeLUGGAGE.color ?>;
 }
 /*********************************************************************
   Footer styles
@@ -211,6 +224,8 @@ body.modeLUGGAGE .subpanelPartiInfo td{
 
 .subpanelPartiInfo .tdLuggage{
   left: 10px;
+  text-align: center;
+  line-height: 2.5em;
 }
 
 body.modeCHECKIN .subpanelPartiInfo .tdLuggage{
@@ -297,11 +312,11 @@ input[type=checkbox]:checked + label:before {
             Search
               Short description of MyMethodOne.
             DisplayPartiInfo
-              Short description of MyMethodTwo.
+              Display information of one participant.
             DisplayMultiplePartiInfo
-              Short
-            CheckIn
-              Short
+              Display information of more than one participants by
+              copying .groupEachParti and call DisplayPartiInfo 
+              several times.
             ReloadPanels
               Reset UI elements. Call this on mode change.
             OnFailure
@@ -358,7 +373,7 @@ var CHandler = function()
     google.script.run
     .withSuccessHandler(function(json){that.DisplayPartiInfo(json, json.CheckInStatus == '1'?'成功登記！':'已取消登記！', iElemIndex);})
     .withFailureHandler(function(e){ that.DisplayPartiInfo(null, e, iElemIndex); })
-    .CheckIn(iHiddenRegNum, "Note~");
+    .CheckIn(iHiddenRegNum);
   });
   
   /*--------------------------------------------------------------------
@@ -392,7 +407,7 @@ var CHandler = function()
     google.script.run
     .withSuccessHandler(function(json){ that.DisplayPartiInfo(json, '行李資料已更新！', iElemIndex); })
     .withFailureHandler(function(e){ that.DisplayPartiInfo(null, e, iElemIndex); })
-    .UpdateLuggages(iHiddenRegNum, arrLuggages, "LuggageNote~");
+    .UpdateLuggages(iHiddenRegNum, arrLuggages);
   });
   
   /*--------------------------------------------------------------------
@@ -461,6 +476,7 @@ CHandler.prototype.DisplayPartiInfo = function(jsonPartiInfo, strMessage, iElemI
     jGroupEachParti.find('.tdACANum').html(jsonPartiInfo.ACANum);
     jGroupEachParti.find('.tdRole').html(jsonPartiInfo.Role);
     jGroupEachParti.find('.tdResponseTime').html(jsonPartiInfo.ResponseTime);
+    jGroupEachParti.find('.tdNote').html(jsonPartiInfo.Note);
     jGroupEachParti.find('.tdCheckInStatus').html(jsonPartiInfo.CheckInStatus == '1'? 
       '<span class="checkInStatus1">已登記</span>' :
       '<span class="checkInStatus0">尚未登記</span>');
@@ -469,8 +485,8 @@ CHandler.prototype.DisplayPartiInfo = function(jsonPartiInfo, strMessage, iElemI
     for(var i = 0; i < jsonPartiInfo.Luggages.length; i++)
     {
       var strLugNum = jsonPartiInfo.Luggages[i].LugNum;
-      var strLugStatus = parseInt(jsonPartiInfo.Luggages[i].Out) == 1? 'Out' : 'In';
-      jGroupEachParti.find('.tdLuggage').append( strLugNum + " (" + strLugStatus + ") ");
+      var strLugStatus = parseInt(jsonPartiInfo.Luggages[i].Out) == 1? '(已取走)' : '';
+      jGroupEachParti.find('.tdLuggage').append( strLugNum + " " + strLugStatus + "<br />");
     }
   
   }
@@ -625,7 +641,8 @@ $(document).ready(function()
         <div class="subpanelPartiInfo">
           <table>
             <tr><th>登記編號</th><td class="tdRegNum"></td><th class="thLuggage">行李寄存資料</th></tr>
-            <tr><th>姓名</th><td class="tdName"></td><td class="tdLuggage" rowspan="8"></td></tr>
+            <tr><th>狀態</th><td class="tdCheckInStatus"></td></tr>
+            <tr><th>姓名</th><td class="tdName"></td><td class="tdLuggage" rowspan="9"></td></tr>
             <tr><th>性別</th><td class="tdGender"></td></tr>
             <tr><th>電話</th><td class="tdPhone"></td></tr>
             <tr><th>電郵</th><td class="tdEmail"></td></tr>
@@ -633,7 +650,7 @@ $(document).ready(function()
             <tr><th>會員編號</th><td class="tdACANum"></td></tr>
             <tr><th>身份</th><td class="tdRole"></td></tr>
             <tr><th>網上交表時間</th><td class="tdResponseTime"></td></tr>
-            <tr><th>狀態</th><td class="tdCheckInStatus"></td></tr>
+            <tr><th>備註</th><td class="tdNote"></td></tr>
           </table>
           <p class="messageDisplay"></p>
         </div>
