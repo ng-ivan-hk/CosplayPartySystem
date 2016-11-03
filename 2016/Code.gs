@@ -252,9 +252,8 @@ function WriteLog_(strLog)
 {
   var googleSheet = GetGoogleSheet_();
   var sheets = googleSheet.getSheets();
-  if(sheets.length == 1)
-  {
-    googleSheet.insertSheet('Log');
-  }
-  googleSheet.getSheets()[SHEET_LOG].appendRow([new Date(), strLog]);
+  if(sheets.length == 1) 
+    googleSheet.insertSheet('Log').appendRow([new Date(), strLog]);
+  else
+    sheets[SHEET_LOG].appendRow([new Date(), strLog]);
 }
