@@ -7,7 +7,7 @@
   
   Created:   17 Oct 2016
   
-  Updated:   2 Nov 2016
+  Updated:   10 Nov 2017
   
   Summary:   Client-side implementation of the System, which is a Web
              UI intended to be used by Cosplay Party helpers/staff.
@@ -27,11 +27,11 @@
 <? 
 var modeCHECKIN = 
 {
-  color: '#ad3c46'
+  color: '#ffab97'
 };
 var modeLUGGAGE =
 {
-  color: '#5e2f82'
+  color: '#debbff'
 };
 ?>
 <style>
@@ -43,10 +43,10 @@ body{
   font-size:  24px;
   background-color: #000000;
   margin: 2em;
-  background-image: url(https://i.imgur.com/AIIJ9YM.png);
+  background-image: url(https://i.imgur.com/LX8Z16V.png);
   background-repeat: no-repeat;
   background-position: right top;
-  background-size: 450px 387px;
+  background-size: 400px 400px;
 }
 body.modeCHECKIN{
   background-color: <?= modeCHECKIN.color ?>;
@@ -327,6 +327,7 @@ var CHandler = function()
   console.log("CHandler constructor called!");
   this.ShowOnePanel('panelSearch');
   this.m_strCurrentMode = "CHECKIN";
+  this.m_bAlert = false; //for preventing staff forget to check-in or update
   this.ReloadPanels();
   var that = this; //for event handler to recognize this class instead of element
   
@@ -371,8 +372,8 @@ var CHandler = function()
     // Submit check-in request to server
     console.log("Check-in Request", iHiddenRegNum);
     google.script.run
-    .withSuccessHandler(function(json){that.DisplayPartiInfo(json, json.CheckInStatus == '1'?'成功登記！':'已取消登記！', iElemIndex);})
-    .withFailureHandler(function(e){ that.DisplayPartiInfo(null, e, iElemIndex); })
+    .withSuccessHandler(function(json){that.DisplayPartiInfo(json, json.CheckInStatus == '1'?'成功登記！':'已取消登記！', iElemIndex);  that.m_bAlert = false; console.log("Alert Off");})
+    .withFailureHandler(function(e){that.DisplayPartiInfo(null, e, iElemIndex);})
     .CheckIn(iHiddenRegNum);
   });
   
@@ -405,7 +406,7 @@ var CHandler = function()
     // Submit update luggage request to server
     console.log("Update Luggage Request", iHiddenRegNum, arrLuggages);
     google.script.run
-    .withSuccessHandler(function(json){ that.DisplayPartiInfo(json, '行李資料已更新！', iElemIndex); })
+    .withSuccessHandler(function(json){that.DisplayPartiInfo(json, '行李資料已更新！', iElemIndex); that.m_bAlert = false; console.log("Alert Off");})
     .withFailureHandler(function(e){ that.DisplayPartiInfo(null, e, iElemIndex); })
     .UpdateLuggages(iHiddenRegNum, arrLuggages);
   });
@@ -435,7 +436,7 @@ CHandler.prototype.Search = function()
   {
     // User entered phone
     google.script.run
-    .withSuccessHandler(function(a){that.DisplayMultiplePartiInfo(a);})
+    .withSuccessHandler(function(a){that.DisplayMultiplePartiInfo(a); that.m_bAlert = true; console.log("Alert On");})
     .withFailureHandler(function(a){that.OnFailure(a);})
     .GetParticipantInfoByPhone(strfieldSearch);
   }
@@ -443,7 +444,7 @@ CHandler.prototype.Search = function()
   {
     // User entered reg num
     google.script.run
-    .withSuccessHandler(function(a){that.DisplayPartiInfo(a);})
+    .withSuccessHandler(function(a){that.DisplayPartiInfo(a); that.m_bAlert = true; console.log("Alert On");})
     .withFailureHandler(function(a){that.OnFailure(a);})
     .GetParticipantInfo(strfieldSearch);
    }
@@ -451,12 +452,10 @@ CHandler.prototype.Search = function()
 
 CHandler.prototype.DisplayPartiInfo = function(jsonPartiInfo, strMessage, iElemIndex)
 {
-  console.log("Received PartiInfo", jsonPartiInfo);
-  
   if(!iElemIndex)
     iElemIndex = 0;
-  
-  console.log(iElemIndex);
+    
+  console.log("Received PartiInfo " + iElemIndex + ":", jsonPartiInfo);
   
   // Display message
   var jGroupEachParti = $('#panelResult .groupEachParti').eq(iElemIndex);
@@ -475,6 +474,7 @@ CHandler.prototype.DisplayPartiInfo = function(jsonPartiInfo, strMessage, iElemI
     jGroupEachParti.find('.tdUID').html(jsonPartiInfo.UID);
     jGroupEachParti.find('.tdACANum').html(jsonPartiInfo.ACANum);
     jGroupEachParti.find('.tdRole').html(jsonPartiInfo.Role);
+    jGroupEachParti.find('.tdCharacter').html(jsonPartiInfo.Character);
     jGroupEachParti.find('.tdResponseTime').html(jsonPartiInfo.ResponseTime);
     jGroupEachParti.find('.tdNote').html(jsonPartiInfo.Note);
     jGroupEachParti.find('.tdCheckInStatus').html(jsonPartiInfo.CheckInStatus == '1'? 
@@ -488,7 +488,7 @@ CHandler.prototype.DisplayPartiInfo = function(jsonPartiInfo, strMessage, iElemI
       var strLugStatus = parseInt(jsonPartiInfo.Luggages[i].Out) == 1? '(已取走)' : '';
       jGroupEachParti.find('.tdLuggage').append( strLugNum + " " + strLugStatus + "<br />");
     }
-  
+    
   }
   
   // Perform different action for different mode
@@ -511,12 +511,11 @@ CHandler.prototype.DisplayPartiInfo = function(jsonPartiInfo, strMessage, iElemI
         var strOut = jsonPartiInfo.Luggages[index].Out;
         $(this).children('.fieldLugNum').val(strLugNum);
         $(this).children('.checkboxOut').prop('checked', strOut == '1');
-        
       });
     }
     jGroupEachParti.find('.subpanelLuggage').show();
   }
-  
+
   // Everything all set, display the result panel!
   this.ShowOnePanel('panelResult');
 };
@@ -554,6 +553,21 @@ CHandler.prototype.DisplayMultiplePartiInfo = function(arrPartiInfoMatches)
 
 CHandler.prototype.ReloadPanels = function()
 {
+  // If staff didn't check-in or update luggage before leave, display an alert (popup confirm box)
+  if(this.m_bAlert)
+  {
+    var strAlertMsg = "你未幫此參加者更新資料。確定要重新搜尋？\n";
+    if(confirm(strAlertMsg))
+    {
+        this.m_bAlert = false;
+        console.log("Alert Off");
+    }
+    else
+    {
+        return;
+    }
+  }
+
   // Clear & reset elements
   document.getElementById("messageError").innerHTML = "&nbsp;";
   $('.subpanelLuggage').hide();
@@ -605,7 +619,7 @@ $(document).ready(function()
 
 <header>
   <h1>香港大學學生會動漫聯盟</h1>
-  <h2>Cosplay Party System 2016 工作人員界面 (測試版)</h2>
+  <h2>Cosplay Party System 2017 工作人員界面 (測試版)</h2>
 </header>
 
 <div id="app">
@@ -649,6 +663,7 @@ $(document).ready(function()
             <tr><th>UID</th><td class="tdUID"></td></tr>
             <tr><th>會員編號</th><td class="tdACANum"></td></tr>
             <tr><th>身份</th><td class="tdRole"></td></tr>
+            <tr><th>Cosplay角色</th><td class="tdCharacter"></td></tr>
             <tr><th>網上交表時間</th><td class="tdResponseTime"></td></tr>
             <tr><th>備註</th><td class="tdNote"></td></tr>
           </table>
@@ -700,9 +715,8 @@ $(document).ready(function()
 
 <footer>
   <p>在此感謝各位工作人員的幫忙</p>
-  <p>《霜月式•楓咲》活動海報由神之豆腐繪製</p>
   <p>
-    &copy;2016 本系統由香港大學學生會動漫聯盟製作 | 
+    &copy;2017 本系統由香港大學學生會動漫聯盟製作 | 
     <a href="<?= GetGoogleForm_().getPublishedUrl(); ?>" target="_blank">登記表格</a> |
     <a href="<?= GetGoogleSheet_().getUrl(); ?>" target="_blank">試算表</a>
   </p>

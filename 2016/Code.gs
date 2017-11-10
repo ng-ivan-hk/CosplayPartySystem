@@ -11,9 +11,10 @@ var COLUMN_PHONE           = 4;
 var COLUMN_EMAIL           = 5;
 var COLUMN_UID             = 6;
 var COLUMN_ACA_NUM         = 7;
-var COLUMN_CHECK_IN_STATUS = 8;
-var COLUMN_NOTE            = 9;
-var COLUMN_LUGGAGE         = 10;
+var COLUMN_CHARACTER       = 8;
+var COLUMN_CHECK_IN_STATUS = 9;
+var COLUMN_NOTE            = 19;
+var COLUMN_LUGGAGE         = 11;
 
 var LUGGAGE_MAX            = 3;
 
@@ -22,9 +23,9 @@ var SHEET_LOG              = 1;
 
 var COLOR_LUGGAGE_OUT      = '#00ffff';
 var COLOR_DEFAULT          = '#ffffff';
-var APP_VERSION            = '1.0.0.1';
+var APP_VERSION            = '1.0.1.2';
 
-/*+===================================================================
+/*+===============================================================================
   File:      Code.gs
   
   Author:    Ivan Ng
@@ -32,21 +33,25 @@ var APP_VERSION            = '1.0.0.1';
   
   Created:   17 Oct 2016
   
-  Updated:   2 Nov 2016
+  Updated:   10 Nov 2017
   
   Summary:   Server-side implementation of the System.
   
   Change Log:
-  ----------------------------------------------------------------------
-  Version    Date           Author      Description
-  ----------------------------------------------------------------------
-  1.0.0.1    4 Nov 2016     Ivan Ng     Initial
+  --------------------------------------------------------------------------------
+  Version    Date          Author     Description
+  --------------------------------------------------------------------------------
+  1.0.0.1    4  Nov 2016   Ivan Ng    Initial
+  1.0.1.2    10 Nov 2017   Ivan Ng    - If staff didn't check-in or update luggage 
+                                        before leave, display an alert
+                                      - Change image and color
+                                      - Add new column: character
 
-----------------------------------------------------------------------
+----------------------------------------------------------------------------------
   This program and any source codes of it may not be reproduced or 
   distributed in any form without consent from The Animation and 
   Comics Association, HKUSU or from the author of this program.
-===================================================================+*/
+===============================================================================+*/
 
 function doGet(request) {
   return HtmlService.createTemplateFromFile('index').evaluate()
@@ -125,6 +130,7 @@ function GetParticipantInfo(iRegNum)
         "UID"           : arrValues[COLUMN_UID],
         "ACANum"        : arrValues[COLUMN_ACA_NUM],
         "Role"          : arrValues[COLUMN_ROLE],
+        "Character"     : arrValues[COLUMN_CHARACTER],
         "ResponseTime"  : dateResponseTime.toLocaleDateString() + dateResponseTime.toLocaleTimeString(),
         "CheckInStatus" : arrValues[COLUMN_CHECK_IN_STATUS] == '1'? 1 : 0,
         "Note"          : arrValues[COLUMN_NOTE],
