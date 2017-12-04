@@ -6,15 +6,15 @@ var GOOGLE_SHEET_ID = '1eclh392VjYsIC8HaxQg8kTl_lcA4FBRI9bEamll2kbw';
 var COLUMN_RESPONSE_TIME   = 0;
 var COLUMN_NAME            = 1;
 var COLUMN_GENDER          = 2;
-var COLUMN_ROLE            = 3;
-var COLUMN_PHONE           = 4;
-var COLUMN_EMAIL           = 5;
-var COLUMN_UID             = 6;
-var COLUMN_ACA_NUM         = 7;
-var COLUMN_CHARACTER       = 8;
-var COLUMN_CHECK_IN_STATUS = 9;
-var COLUMN_NOTE            = 19;
-var COLUMN_LUGGAGE         = 11;
+var COLUMN_ROLE            = 7;
+var COLUMN_PHONE           = 3;
+var COLUMN_EMAIL           = 4;
+var COLUMN_UID             = 5;
+var COLUMN_ACA_NUM         = 6;
+var COLUMN_CHARACTER       = 7;
+var COLUMN_CHECK_IN_STATUS = 8;
+var COLUMN_NOTE            = 9;
+var COLUMN_LUGGAGE         = 10;
 
 var LUGGAGE_MAX            = 3;
 
@@ -23,7 +23,7 @@ var SHEET_LOG              = 1;
 
 var COLOR_LUGGAGE_OUT      = '#00ffff';
 var COLOR_DEFAULT          = '#ffffff';
-var APP_VERSION            = '1.0.1.2';
+var APP_VERSION            = '1.0.2.3';
 
 /*+===============================================================================
   File:      Code.gs
@@ -33,7 +33,7 @@ var APP_VERSION            = '1.0.1.2';
   
   Created:   17 Oct 2016
   
-  Updated:   10 Nov 2017
+  Updated:   04 Dec 2017
   
   Summary:   Server-side implementation of the System.
   
@@ -41,11 +41,13 @@ var APP_VERSION            = '1.0.1.2';
   --------------------------------------------------------------------------------
   Version    Date          Author     Description
   --------------------------------------------------------------------------------
-  1.0.0.1    4  Nov 2016   Ivan Ng    Initial
+  1.0.0.1    04 Nov 2016   Ivan Ng    Initial
   1.0.1.2    10 Nov 2017   Ivan Ng    - If staff didn't check-in or update luggage 
                                         before leave, display an alert
                                       - Change image and color
                                       - Add new column: character
+  1.0.2.3    04 Dec 2017   Ivan Ng    - Fix: alert still on if phone not exist
+                                      - Prevent switching mode when loading
 
 ----------------------------------------------------------------------------------
   This program and any source codes of it may not be reproduced or 
@@ -83,7 +85,10 @@ function GetParticipantInfoByPhone(strPhone)
     }
   }
   
-  return arrMatchesCheckedIn.concat(arrMatchesNotCheckedIn);
+  if (arrMatchesCheckedIn.length > 0 || arrMatchesNotCheckedIn.length > 0)
+    return arrMatchesCheckedIn.concat(arrMatchesNotCheckedIn);
+  else
+    throw "此電話號碼並未登記。";
 }
 
 function GetParticipantInfo(iRegNum)

@@ -7,7 +7,7 @@
   
   Created:   17 Oct 2016
   
-  Updated:   10 Nov 2017
+  Updated:   04 Dec 2017
   
   Summary:   Client-side implementation of the System, which is a Web
              UI intended to be used by Cosplay Party helpers/staff.
@@ -27,11 +27,11 @@
 <? 
 var modeCHECKIN = 
 {
-  color: '#ffab97'
+  color: '#ff9880'
 };
 var modeLUGGAGE =
 {
-  color: '#debbff'
+  color: '#d09eff'
 };
 ?>
 <style>
@@ -318,7 +318,8 @@ input[type=checkbox]:checked + label:before {
               copying .groupEachParti and call DisplayPartiInfo 
               several times.
             ReloadPanels
-              Reset UI elements. Call this on mode change.
+              Back to search page. Called when mode change or 
+              research button is clicked.
             OnFailure
               Destructor.
 C---C---C---C---C---C---C---C---C---C---C---C---C---C---C---C---C-C*/
@@ -326,9 +327,9 @@ var CHandler = function()
 {
   console.log("CHandler constructor called!");
   this.ShowOnePanel('panelSearch');
-  this.m_strCurrentMode = "CHECKIN";
-  this.m_bAlert = false; //for preventing staff forget to check-in or update
-  this.ReloadPanels();
+  this.m_bAlert = false; //prevent staff forgetting to check-in or update
+  this.m_bLoading = false; //don't allow staff to switch mode when loading
+  this.ReloadPanels("CHECKIN");
   var that = this; //for event handler to recognize this class instead of element
   
   $( "#panelSearch form" ).submit(function(event)
@@ -342,13 +343,13 @@ var CHandler = function()
   });
   $('nav #buttonModeCheckIn').click(function(event)
   {
-    that.m_strCurrentMode = "CHECKIN";
-    that.ReloadPanels();
+    console.log("Mode button CHECKIN clicked (Current mode:" + that.m_strCurrentMode + ")");
+    that.ReloadPanels("CHECKIN");
   });
   $('nav #buttonModeLuggage').click(function(event)
   {
-    that.m_strCurrentMode = "LUGGAGE";
-    that.ReloadPanels();
+    console.log("Mode button LUGGAGE clicked (Current mode:" + that.m_strCurrentMode + ")");
+    that.ReloadPanels("LUGGAGE");
   });
   
   /*--------------------------------------------------------------------
@@ -360,6 +361,7 @@ var CHandler = function()
     var iElemIndex = $( "#panelResult .groupEachParti .buttonCheckIn" ).index(this);
     
     // Hide check-in buttons and show loading instead
+    that.m_bLoading = true;
     var jParentGroupEachParti = $(this).parents('.groupEachParti');
     jParentGroupEachParti.find('.subpanelCheckIn').hide();
     jParentGroupEachParti.find('.subpanelLoading').show();
@@ -372,7 +374,7 @@ var CHandler = function()
     // Submit check-in request to server
     console.log("Check-in Request", iHiddenRegNum);
     google.script.run
-    .withSuccessHandler(function(json){that.DisplayPartiInfo(json, json.CheckInStatus == '1'?'成功登記！':'已取消登記！', iElemIndex);  that.m_bAlert = false; console.log("Alert Off");})
+    .withSuccessHandler(function(json){that.DisplayPartiInfo(json, json.CheckInStatus == '1'?'成功登記！':'已取消登記！', iElemIndex); that.m_bAlert = false; console.log("Alert Off");})
     .withFailureHandler(function(e){that.DisplayPartiInfo(null, e, iElemIndex);})
     .CheckIn(iHiddenRegNum);
   });
@@ -386,6 +388,7 @@ var CHandler = function()
     var iElemIndex = $( "#panelResult .groupEachParti .buttonUpdateLuggage" ).index(this);
     
     // Hide fields & buttons and show loading instead
+    that.m_bLoading = true;
     var jParentGroupEachParti = $(this).parents('.groupEachParti');
     jParentGroupEachParti.find('.subpanelLuggage').hide();
     jParentGroupEachParti.find('.subpanelLoading').show();
@@ -416,9 +419,8 @@ var CHandler = function()
   --------------------------------------------------------------------*/
   $('#panelResult .buttonSearchAgain').click(function(event)
   {
-    that.ReloadPanels();
+    that.ReloadPanels(that.m_strCurrentMode);
   });
-  
 };
 
 CHandler.prototype.Search = function()
@@ -430,6 +432,7 @@ CHandler.prototype.Search = function()
     this.ShowOnePanel('panelSearch');
     return;
   }
+  this.m_bLoading = true;
   this.ShowOnePanel('panelLoading');
   var that = this;
   if(strfieldSearch.length == 8)
@@ -518,13 +521,14 @@ CHandler.prototype.DisplayPartiInfo = function(jsonPartiInfo, strMessage, iElemI
 
   // Everything all set, display the result panel!
   this.ShowOnePanel('panelResult');
+  this.m_bLoading = false;
 };
   
 CHandler.prototype.DisplayMultiplePartiInfo = function(arrPartiInfoMatches)
 {
   console.log("Received MultiplePartiInfo", arrPartiInfoMatches);
   
-  if     (arrPartiInfoMatches.length == 0) this.OnFailure({message: "此電話號碼並未登記。"});
+  if (arrPartiInfoMatches.length == 0) this.OnFailure({message: "此電話號碼並未登記。"}); //should not happen as server throws exception
   else if(arrPartiInfoMatches.length == 1) this.DisplayPartiInfo(arrPartiInfoMatches[0]);
   else //more than one
   {
@@ -551,8 +555,14 @@ CHandler.prototype.DisplayMultiplePartiInfo = function(arrPartiInfoMatches)
   }
 };
 
-CHandler.prototype.ReloadPanels = function()
+CHandler.prototype.ReloadPanels = function(strMode)
 {
+  if(this.m_bLoading)
+  {
+    alert("正在載入中，請稍等...");
+    return;
+  }
+  
   // If staff didn't check-in or update luggage before leave, display an alert (popup confirm box)
   if(this.m_bAlert)
   {
@@ -577,20 +587,22 @@ CHandler.prototype.ReloadPanels = function()
   $('#panelResult .groupEachParti').nextAll().remove(); //just keep one copy, remove all others
   
   // UI update for current mode
-  if(this.m_strCurrentMode == "CHECKIN")
+  if(strMode == "CHECKIN")
   {
     $('nav .buttonMode').removeClass('buttonModeCurrent');
     $('nav #buttonModeCheckIn').addClass('buttonModeCurrent');
     $('body').removeClass().addClass('modeCHECKIN');
   }
-  else if(this.m_strCurrentMode == "LUGGAGE")
+  else if(strMode == "LUGGAGE")
   {
     $('nav .buttonMode').removeClass('buttonModeCurrent');
     $('nav #buttonModeLuggage').addClass('buttonModeCurrent');
     $('body').removeClass().addClass('modeLUGGAGE');
   }
+  this.m_strCurrentMode = strMode;
   this.ShowOnePanel('panelSearch');
   $('#panelSearch .fieldSearch').select();
+  return;
 };
 
 CHandler.prototype.ShowOnePanel = function(strPanelToShow)
@@ -606,6 +618,7 @@ CHandler.prototype.OnFailure = function(error)
   document.getElementById("messageError").innerHTML = "錯誤：" + error.message;
   this.ShowOnePanel('panelSearch');
   $('#panelSearch .fieldSearch').select();
+  this.m_bLoading = false;
 };
 
 $(document).ready(function()
@@ -619,7 +632,7 @@ $(document).ready(function()
 
 <header>
   <h1>香港大學學生會動漫聯盟</h1>
-  <h2>Cosplay Party System 2017 工作人員界面 (測試版)</h2>
+  <h2>Cosplay Party System 2017 工作人員界面</h2>
 </header>
 
 <div id="app">
